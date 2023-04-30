@@ -318,7 +318,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
       else
         this.buffer.writeUIntBE(x, this.offset, 3)
 
-      return new Ok<void>(undefined)
+      return Ok.void()
     } catch (e: unknown) {
       return Err.error(`Cursor.setUint24 failed`)
     }
@@ -610,7 +610,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     try {
       this.bytes.fill(value, this.offset, this.offset + length)
       this.offset += length
-      return new Ok<void>(undefined)
+      return Ok.void()
     } catch (e: unknown) {
       return Err.error(`Cursor.fill failed`)
     }
@@ -640,7 +640,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
       yield subarray.inner
     }
 
-    return new Ok<void>(undefined)
+    return Ok.void()
   }
 
 }
