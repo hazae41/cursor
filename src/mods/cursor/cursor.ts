@@ -188,7 +188,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     try {
       return new Ok(this.data.getUint8(this.offset))
     } catch (e: unknown) {
-      return Err.error(`Cursor.getUint8 failed`)
+      return Err.error(`Cursor.getUint8 failed`, { cause: e })
     }
   }
 
@@ -213,7 +213,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     try {
       return new Ok(this.data.setUint8(this.offset, x))
     } catch (e: unknown) {
-      return Err.error(`Cursor.setUint8 failed`)
+      return Err.error(`Cursor.setUint8 failed`, { cause: e })
     }
   }
 
@@ -238,7 +238,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     try {
       return new Ok(this.data.getUint16(this.offset, littleEndian))
     } catch (e: unknown) {
-      return Err.error(`Cursor.getUint16 failed`)
+      return Err.error(`Cursor.getUint16 failed`, { cause: e })
     }
   }
 
@@ -263,7 +263,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     try {
       return new Ok(this.data.setUint16(this.offset, x, littleEndian))
     } catch (e: unknown) {
-      return Err.error(`Cursor.setUint16 failed`)
+      return Err.error(`Cursor.setUint16 failed`, { cause: e })
     }
   }
 
@@ -290,7 +290,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
         ? new Ok(this.buffer.readUIntLE(this.offset, 3))
         : new Ok(this.buffer.readUIntBE(this.offset, 3));
     } catch (e: unknown) {
-      return Err.error(`Cursor.getUint24 failed`)
+      return Err.error(`Cursor.getUint24 failed`, { cause: e })
     }
   }
 
@@ -320,7 +320,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
       return Ok.void()
     } catch (e: unknown) {
-      return Err.error(`Cursor.setUint24 failed`)
+      return Err.error(`Cursor.setUint24 failed`, { cause: e })
     }
   }
 
@@ -345,7 +345,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     try {
       return new Ok(this.data.getUint32(this.offset, littleEndian))
     } catch (e: unknown) {
-      return Err.error(`Cursor.getUint32 failed`)
+      return Err.error(`Cursor.getUint32 failed`, { cause: e })
     }
   }
 
@@ -370,7 +370,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     try {
       return new Ok(this.data.setUint32(this.offset, x, littleEndian))
     } catch (e: unknown) {
-      return Err.error(`Cursor.setUint32 failed`)
+      return Err.error(`Cursor.setUint32 failed`, { cause: e })
     }
   }
 
@@ -395,7 +395,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     try {
       return new Ok(this.data.getBigUint64(this.offset, littleEndian))
     } catch (e: unknown) {
-      return Err.error(`Cursor.getUint64 failed`)
+      return Err.error(`Cursor.getUint64 failed`, { cause: e })
     }
   }
 
@@ -420,7 +420,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     try {
       return new Ok(this.data.setBigUint64(this.offset, x, littleEndian))
     } catch (e: unknown) {
-      return Err.error(`Cursor.setUint64 failed`)
+      return Err.error(`Cursor.setUint64 failed`, { cause: e })
     }
   }
 
@@ -612,7 +612,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
       this.offset += length
       return Ok.void()
     } catch (e: unknown) {
-      return Err.error(`Cursor.fill failed`)
+      return Err.error(`Cursor.fill failed`, { cause: e })
     }
   }
 
