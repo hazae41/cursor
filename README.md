@@ -35,8 +35,8 @@ console.log(cursor.offset) // 3
 const bytes = new Uint8Array(/*...*/)
 const cursor = new Cursor(bytes)
 
-const uint8 = cursor.readUint8()
-const uint16 = cursor.readUint16()
+const uint8 = cursor.readUint8().unwrap()
+const uint16 = cursor.readUint16().unwrap()
 
 console.log(cursor.offset) // 3
 ```
