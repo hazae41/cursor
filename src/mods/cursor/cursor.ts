@@ -1,4 +1,4 @@
-import { Bytes } from "@hazae41/bytes"
+import { Bytes, Sized } from "@hazae41/bytes"
 import { Err, Ok, Result } from "@hazae41/result"
 import { Buffers } from "libs/buffers/buffers.js"
 import { DataViews } from "libs/dataviews/dataviews.js"
@@ -54,27 +54,44 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   /**
-   * Create a new Binary using Buffer.alloc
+   * Create a new Cursor using Bytes.empty
+   * @returns 
+   */
+  static empty() {
+    return new this(Bytes.empty())
+  }
+
+  /**
+   * Create a new Cursor using Bytes.alloc
    * @param length 
-   * @returns Binary
+   * @returns Cursor
    */
   static alloc<N extends number>(length: N) {
     return new this(Bytes.alloc(length))
   }
 
   /**
-   * Create a new Binary using Buffer.allocUnsafe
+   * Create a new Cursor using Bytes.allocUnsafe
    * @param length 
-   * @returns Binary
+   * @returns Cursor
    */
   static allocUnsafe<N extends number>(length: N) {
     return new this(Bytes.allocUnsafe(length))
   }
 
   /**
-   * Create a new Binary with random bytes
+   * Create a new Cursor using Bytes.from
+   * @param sized 
+   * @returns 
+   */
+  static from<N extends number>(sized: Sized<number, N>) {
+    return new this(Bytes.from(sized))
+  }
+
+  /**
+   * Create a new Cursor with random bytes
    * @param length 
-   * @returns Binary
+   * @returns Cursor
    */
   static random<N extends number>(length: N) {
     return new this(Bytes.random(length))
