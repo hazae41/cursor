@@ -23,8 +23,8 @@ npm i @hazae41/cursor
 ```typescript
 const cursor = Cursor.allocUnsafe(1024)
 
-cursor.writeUint8(123)
-cursor.writeUint16(1234)
+cursor.writeUint8(123).unwrap()
+cursor.writeUint16(1234).unwrap()
 
 console.log(cursor.offset) // 3
 ```
