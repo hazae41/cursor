@@ -12,6 +12,7 @@ npm i @hazae41/cursor
 - 100% TypeScript and ESM
 - No external dependencies
 - Zero-copy reading and writing
+- Rust-like patterns
 - Unit-tested
 
 ## Usage
