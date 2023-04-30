@@ -1,5 +1,6 @@
 import { Bytes } from "@hazae41/bytes";
 import { assert, test } from "@hazae41/phobos";
+import { Result } from "@hazae41/result";
 import { Cursor } from "mods/cursor/cursor.js";
 import { webcrypto } from "node:crypto";
 import { relative, resolve } from "node:path";
@@ -28,21 +29,21 @@ test("Allocation", async () => {
 })
 
 test("write then read", async () => {
-  const buffer = Buffer.from([1, 2, 3, 4])
-  const cursor = Cursor.allocUnsafe(buffer.length)
+  const bytes = Bytes.from([1, 2, 3, 4])
+  const cursor = Cursor.allocUnsafe(bytes.length)
 
-  cursor.write(buffer)
-  assert(cursor.offset === buffer.length)
-  assert(cursor.buffer.equals(buffer))
+  cursor.write(bytes).unwrap()
+  assert(cursor.offset === bytes.length)
+  assert(Bytes.equals(cursor.inner, bytes))
 
   cursor.offset = 0
 
-  const buffer2 = cursor.read(buffer.length)
-  assert(cursor.offset === buffer.length)
-  assert(cursor.buffer.equals(buffer2))
+  const bytes2 = cursor.read(bytes.length).unwrap()
+  assert(cursor.offset === bytes.length)
+  assert(Bytes.equals(cursor.inner, bytes2))
 
-  assert(buffer.length === buffer2.length)
-  assert(buffer.equals(buffer2))
+  assert(bytes.length === bytes2.length)
+  assert(Bytes.equals(bytes, bytes2))
 })
 
 // test("out of bound write then read", async () => {
@@ -60,17 +61,17 @@ test("writeUint8 then readUint8", async () => {
 
   const n = 42
 
-  cursor.writeUint8(n)
+  cursor.writeUint8(n).unwrap()
   assert(cursor.offset === 1)
-  assert(cursor.bytes.length === 1)
-  assert(cursor.buffer.equals(Buffer.from([n])))
+  assert(cursor.inner.length === 1)
+  assert(Bytes.equals2(cursor.inner, Bytes.from([n])))
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint8()
+  const n2 = cursor.readUint8().unwrap()
   assert(cursor.offset === 1)
-  assert(cursor.bytes.length === 1)
-  assert(cursor.buffer.equals(Buffer.from([n])))
+  assert(cursor.inner.length === 1)
+  assert(Bytes.equals2(cursor.inner, Bytes.from([n])))
 
   assert(n === n2)
 
@@ -85,15 +86,15 @@ test("writeUint16 then readUint16", async () => {
 
   const n = 42
 
-  cursor.writeUint16(n)
+  cursor.writeUint16(n).unwrap()
   assert(cursor.offset === 2)
-  assert(cursor.bytes.length === 2)
+  assert(cursor.inner.length === 2)
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint16()
+  const n2 = cursor.readUint16().unwrap()
   assert(cursor.offset === 2)
-  assert(cursor.bytes.length === 2)
+  assert(cursor.inner.length === 2)
 
   assert(n === n2)
 
@@ -108,15 +109,15 @@ test("writeUint24 then readUint24", async () => {
 
   const n = 42
 
-  cursor.writeUint24(n)
+  cursor.writeUint24(n).unwrap()
   assert(cursor.offset === 3)
-  assert(cursor.bytes.length === 3)
+  assert(cursor.inner.length === 3)
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint24()
+  const n2 = cursor.readUint24().unwrap()
   assert(cursor.offset === 3)
-  assert(cursor.bytes.length === 3)
+  assert(cursor.inner.length === 3)
 
   assert(n === n2)
 
@@ -131,15 +132,15 @@ test("writeUint32 then readUint32", async () => {
 
   const n = 42
 
-  cursor.writeUint32(n)
+  cursor.writeUint32(n).unwrap()
   assert(cursor.offset === 4)
-  assert(cursor.bytes.length === 4)
+  assert(cursor.inner.length === 4)
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint32()
+  const n2 = cursor.readUint32().unwrap()
   assert(cursor.offset === 4)
-  assert(cursor.bytes.length === 4)
+  assert(cursor.inner.length === 4)
 
   assert(n === n2)
 
@@ -156,14 +157,23 @@ test("fill", async ({ test }) => {
   cursor.fill(1, 2)
 
   const expected = new Uint8Array([0, 0, 1, 1, 0])
-  assert(Bytes.equals(cursor.bytes, expected))
+  assert(Bytes.equals2(cursor.inner, expected))
 })
 
 test("split", async ({ test }) => {
   globalThis.crypto = webcrypto as any
 
   const cursor = Cursor.random(256)
-  const chunks = [...cursor.split(100)]
+
+  const splitter = cursor.split(100)
+  const chunks = new Array<Bytes>()
+
+  let result: IteratorResult<Bytes, Result<void, Error>>
+
+  while (!(result = splitter.next()).done)
+    chunks.push(result.value)
+  if (result.value.isErr())
+    return result.value.unwrap()
 
   assert(chunks[0].length === 100)
   assert(chunks[1].length === 100)
