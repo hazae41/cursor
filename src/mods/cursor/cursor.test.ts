@@ -32,13 +32,13 @@ test("write then read", async () => {
   const bytes = Bytes.from([1, 2, 3, 4])
   const cursor = Cursor.allocUnsafe(bytes.length)
 
-  cursor.write(bytes).unwrap()
+  cursor.tryWrite(bytes).unwrap()
   assert(cursor.offset === bytes.length)
   assert(Bytes.equals(cursor.inner, bytes))
 
   cursor.offset = 0
 
-  const bytes2 = cursor.read(bytes.length).unwrap()
+  const bytes2 = cursor.tryRead(bytes.length).unwrap()
   assert(cursor.offset === bytes.length)
   assert(Bytes.equals(cursor.inner, bytes2))
 
@@ -61,14 +61,14 @@ test("writeUint8 then readUint8", async () => {
 
   const n = 42
 
-  cursor.writeUint8(n).unwrap()
+  cursor.tryWriteUint8(n).unwrap()
   assert(cursor.offset === 1)
   assert(cursor.inner.length === 1)
   assert(Bytes.equals2(cursor.inner, Bytes.from([n])))
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint8().unwrap()
+  const n2 = cursor.tryReadUint8().unwrap()
   assert(cursor.offset === 1)
   assert(cursor.inner.length === 1)
   assert(Bytes.equals2(cursor.inner, Bytes.from([n])))
@@ -86,13 +86,13 @@ test("writeUint16 then readUint16", async () => {
 
   const n = 42
 
-  cursor.writeUint16(n).unwrap()
+  cursor.tryWriteUint16(n).unwrap()
   assert(cursor.offset === 2)
   assert(cursor.inner.length === 2)
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint16().unwrap()
+  const n2 = cursor.tryReadUint16().unwrap()
   assert(cursor.offset === 2)
   assert(cursor.inner.length === 2)
 
@@ -109,13 +109,13 @@ test("writeUint24 then readUint24", async () => {
 
   const n = 42
 
-  cursor.writeUint24(n).unwrap()
+  cursor.tryWriteUint24(n).unwrap()
   assert(cursor.offset === 3)
   assert(cursor.inner.length === 3)
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint24().unwrap()
+  const n2 = cursor.tryReadUint24().unwrap()
   assert(cursor.offset === 3)
   assert(cursor.inner.length === 3)
 
@@ -132,13 +132,13 @@ test("writeUint32 then readUint32", async () => {
 
   const n = 42
 
-  cursor.writeUint32(n).unwrap()
+  cursor.tryWriteUint32(n).unwrap()
   assert(cursor.offset === 4)
   assert(cursor.inner.length === 4)
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint32().unwrap()
+  const n2 = cursor.tryReadUint32().unwrap()
   assert(cursor.offset === 4)
   assert(cursor.inner.length === 4)
 
@@ -165,7 +165,7 @@ test("split", async ({ test }) => {
 
   const cursor = Cursor.random(256)
 
-  const splitter = cursor.split(100)
+  const splitter = cursor.trySplit(100)
   const chunks = new Array<Bytes>()
 
   let result: IteratorResult<Bytes, Result<void, Error>>
