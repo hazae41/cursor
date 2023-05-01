@@ -24,8 +24,8 @@ npm i @hazae41/cursor
 ```typescript
 const cursor = Cursor.allocUnsafe(1024)
 
-cursor.writeUint8(123).unwrap()
-cursor.writeUint16(1234).unwrap()
+cursor.tryWriteUint8(123).unwrap()
+cursor.tryWriteUint16(1234).unwrap()
 
 console.log(cursor.offset) // 3
 ```
@@ -36,8 +36,8 @@ console.log(cursor.offset) // 3
 const bytes = new Uint8Array(/*...*/)
 const cursor = new Cursor(bytes)
 
-const uint8 = cursor.readUint8().unwrap()
-const uint16 = cursor.readUint16().unwrap()
+const uint8 = cursor.tryReadUint8().unwrap()
+const uint16 = cursor.tryReadUint16().unwrap()
 
 console.log(cursor.offset) // 3
 ```
