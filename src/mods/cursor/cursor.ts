@@ -4,12 +4,24 @@ import { Buffers } from "libs/buffers/buffers.js"
 import { DataViews } from "libs/dataviews/dataviews.js"
 
 export type CursorError =
-  | CursorReadOverflowError
-  | CursorWriteOverflowError
-  | CursorNullError
-  | CursorUnknownError
+  | CursorReadError
+  | CursorWriteError
 
-export class CursorReadOverflowError extends Error {
+export type CursorReadError =
+  | CursorReadOverflowError
+  | CursorReadUnknownError
+
+export type CursorReadOverflowError =
+  | CursorReadLengthOverflowError
+  | CursorReadNullOverflowError
+
+export type CursorWriteError =
+  | CursorWriteLengthOverflowError
+  | CursorWriteUnknownError
+
+export class CursorReadLengthOverflowError extends Error {
+  readonly #class = CursorReadLengthOverflowError
+
   constructor(
     readonly cursor: Cursor,
     readonly length: number
@@ -18,7 +30,9 @@ export class CursorReadOverflowError extends Error {
   }
 }
 
-export class CursorWriteOverflowError extends Error {
+export class CursorWriteLengthOverflowError extends Error {
+  readonly #class = CursorWriteLengthOverflowError
+
   constructor(
     readonly cursor: Cursor,
     readonly length: number
@@ -27,15 +41,31 @@ export class CursorWriteOverflowError extends Error {
   }
 }
 
-export class CursorNullError extends Error {
+export class CursorReadNullOverflowError extends Error {
+  readonly #class = CursorReadNullOverflowError
+
   constructor(
     readonly cursor: Cursor
   ) {
-    super(`Cursor: Out of bounds null byte at offset ${cursor.offset}/${cursor.length}`)
+    super(`Cursor: Overflow reading null byte at offset ${cursor.offset}/${cursor.length}`)
   }
 }
 
-export class CursorUnknownError extends Error {
+export class CursorReadUnknownError extends Error {
+  readonly #class = CursorReadUnknownError
+
+  constructor(
+    readonly cursor: Cursor,
+    readonly message: string,
+    readonly options?: ErrorOptions
+  ) {
+    super(`Cursor: ${message}`)
+  }
+}
+
+export class CursorWriteUnknownError extends Error {
+  readonly #class = CursorWriteUnknownError
+
   constructor(
     readonly cursor: Cursor,
     readonly message: string,
@@ -174,9 +204,9 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
-  tryGet<N extends number>(length: N): Result<Bytes<N>, CursorReadOverflowError> {
+  tryGet<N extends number>(length: N): Result<Bytes<N>, CursorReadLengthOverflowError> {
     if (this.remaining < length)
-      return new Err(new CursorReadOverflowError(this, length))
+      return new Err(new CursorReadLengthOverflowError(this, length))
 
     const subarray = this.bytes.subarray(this.offset, this.offset + length)
 
@@ -189,22 +219,17 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param shallow 
    * @returns subarray of the bytes
    */
-  tryRead<N extends number>(length: N): Result<Bytes<N>, CursorReadOverflowError> {
-    const subarray = this.tryGet(length)
-
-    if (subarray.isOk())
-      this.offset += length
-
-    return subarray
+  tryRead<N extends number>(length: N): Result<Bytes<N>, CursorReadLengthOverflowError> {
+    return this.tryGet(length).inspectSync(() => this.offset += length)
   }
 
   /**
    * Set an array to the bytes
    * @param array array
    */
-  trySet(array: Uint8Array): Result<void, CursorWriteOverflowError> {
+  trySet(array: Uint8Array): Result<void, CursorWriteLengthOverflowError> {
     if (this.remaining < array.length)
-      return new Err(new CursorWriteOverflowError(this, array.length))
+      return new Err(new CursorWriteLengthOverflowError(this, array.length))
 
     return new Ok(this.bytes.set(array, this.offset))
   }
@@ -213,24 +238,19 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Write an array to the bytes
    * @param array array
    */
-  tryWrite(array: Uint8Array): Result<void, CursorWriteOverflowError> {
-    const result = this.trySet(array)
-
-    if (result.isOk())
-      this.offset += array.length
-
-    return result
+  tryWrite(array: Uint8Array): Result<void, CursorWriteLengthOverflowError> {
+    return this.trySet(array).inspectSync(() => this.offset += array.length)
   }
 
   /**
    * Get a 8-bits unsigned number
    * @returns 8-bits unsigned number
    */
-  tryGetUint8(): Result<number, CursorUnknownError> {
+  tryGetUint8(): Result<number, CursorReadUnknownError> {
     try {
       return new Ok(this.data.getUint8(this.offset))
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `getUint8 failed`, { cause: e }))
+      return new Err(new CursorReadUnknownError(this, `getUint8 failed`, { cause: e }))
     }
   }
 
@@ -238,24 +258,19 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Read a 8-bits unsigned number
    * @returns 8-bits unsigned number
    */
-  tryReadUint8(): Result<number, CursorUnknownError> {
-    const x = this.tryGetUint8()
-
-    if (x.isOk())
-      this.offset++
-
-    return x
+  tryReadUint8(): Result<number, CursorReadUnknownError> {
+    return this.tryGetUint8().inspectSync(() => this.offset++)
   }
 
   /**
    * Set a 8-bits unsigned number
    * @param x 8-bits unsigned number
    */
-  trySetUint8(x: number): Result<void, CursorUnknownError> {
+  trySetUint8(x: number): Result<void, CursorWriteUnknownError> {
     try {
       return new Ok(this.data.setUint8(this.offset, x))
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `setUint8 failed`, { cause: e }))
+      return new Err(new CursorWriteUnknownError(this, `setUint8 failed`, { cause: e }))
     }
   }
 
@@ -263,24 +278,19 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Write a 8-bits unsigned number
    * @param x 8-bits unsigned number
    */
-  tryWriteUint8(x: number): Result<void, CursorUnknownError> {
-    const result = this.trySetUint8(x)
-
-    if (result.isOk())
-      this.offset++
-
-    return result
+  tryWriteUint8(x: number): Result<void, CursorWriteUnknownError> {
+    return this.trySetUint8(x).inspectSync(() => this.offset++)
   }
 
   /**
    * Get a 16-bits unsigned number
    * @returns 16-bits unsigned number
    */
-  tryGetUint16(littleEndian?: boolean): Result<number, CursorUnknownError> {
+  tryGetUint16(littleEndian?: boolean): Result<number, CursorReadUnknownError> {
     try {
       return new Ok(this.data.getUint16(this.offset, littleEndian))
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `getUint16 failed`, { cause: e }))
+      return new Err(new CursorReadUnknownError(this, `getUint16 failed`, { cause: e }))
     }
   }
 
@@ -288,24 +298,19 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Read a 16-bits unsigned number
    * @returns 16-bits unsigned number
    */
-  tryReadUint16(littleEndian?: boolean): Result<number, CursorUnknownError> {
-    const x = this.tryGetUint16(littleEndian)
-
-    if (x.isOk())
-      this.offset += 2
-
-    return x
+  tryReadUint16(littleEndian?: boolean): Result<number, CursorReadUnknownError> {
+    return this.tryGetUint16(littleEndian).inspectSync(() => this.offset += 2)
   }
 
   /**
    * Set a 16-bits unsigned number
    * @param x 16-bits unsigned number
    */
-  trySetUint16(x: number, littleEndian?: boolean): Result<void, CursorUnknownError> {
+  trySetUint16(x: number, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
     try {
       return new Ok(this.data.setUint16(this.offset, x, littleEndian))
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `setUint16 failed`, { cause: e }))
+      return new Err(new CursorWriteUnknownError(this, `setUint16 failed`, { cause: e }))
     }
   }
 
@@ -313,26 +318,22 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Write a 16-bits unsigned number
    * @param x 16-bits unsigned number
    */
-  tryWriteUint16(x: number, littleEndian?: boolean): Result<void, CursorUnknownError> {
-    const result = this.trySetUint16(x, littleEndian)
-
-    if (result.isOk())
-      this.offset += 2
-
-    return result
+  tryWriteUint16(x: number, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
+    return this.trySetUint16(x, littleEndian).inspectSync(() => this.offset += 2)
   }
 
   /**
    * Get a 24-bits unsigned number
    * @returns 24-bits unsigned number
    */
-  tryGetUint24(littleEndian?: boolean): Result<number, CursorUnknownError> {
+  tryGetUint24(littleEndian?: boolean): Result<number, CursorReadUnknownError> {
     try {
-      return littleEndian
-        ? new Ok(this.buffer.readUIntLE(this.offset, 3))
-        : new Ok(this.buffer.readUIntBE(this.offset, 3));
+      if (littleEndian)
+        return new Ok(this.buffer.readUIntLE(this.offset, 3))
+      else
+        return new Ok(this.buffer.readUIntBE(this.offset, 3))
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `getUint24 failed`, { cause: e }))
+      return new Err(new CursorReadUnknownError(this, `getUint24 failed`, { cause: e }))
     }
   }
 
@@ -340,20 +341,15 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Read a 24-bits unsigned number
    * @returns 24-bits unsigned number
    */
-  tryReadUint24(littleEndian?: boolean): Result<number, CursorUnknownError> {
-    const x = this.tryGetUint24(littleEndian)
-
-    if (x.isOk())
-      this.offset += 3
-
-    return x
+  tryReadUint24(littleEndian?: boolean): Result<number, CursorReadUnknownError> {
+    return this.tryGetUint24(littleEndian).inspectSync(() => this.offset += 3)
   }
 
   /**
    * Set a 24-bits unsigned number
    * @param x 24-bits unsigned number
    */
-  trySetUint24(x: number, littleEndian?: boolean): Result<void, CursorUnknownError> {
+  trySetUint24(x: number, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
     try {
       if (littleEndian)
         this.buffer.writeUIntLE(x, this.offset, 3)
@@ -362,7 +358,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
       return Ok.void()
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `setUint24 failed`, { cause: e }))
+      return new Err(new CursorWriteUnknownError(this, `setUint24 failed`, { cause: e }))
     }
   }
 
@@ -370,24 +366,19 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Write a 24-bits unsigned number
    * @param x 24-bits unsigned number
    */
-  tryWriteUint24(x: number, littleEndian?: boolean): Result<void, CursorUnknownError> {
-    const result = this.trySetUint24(x, littleEndian)
-
-    if (result.isOk())
-      this.offset += 3
-
-    return result
+  tryWriteUint24(x: number, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
+    return this.trySetUint24(x, littleEndian).inspectSync(() => this.offset += 3)
   }
 
   /**
    * Get a 32-bits unsigned number
    * @returns 32-bits unsigned number
    */
-  tryGetUint32(littleEndian?: boolean): Result<number, CursorUnknownError> {
+  tryGetUint32(littleEndian?: boolean): Result<number, CursorReadUnknownError> {
     try {
       return new Ok(this.data.getUint32(this.offset, littleEndian))
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `getUint32 failed`, { cause: e }))
+      return new Err(new CursorReadUnknownError(this, `getUint32 failed`, { cause: e }))
     }
   }
 
@@ -395,24 +386,19 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Read a 32-bits unsigned number
    * @returns 32-bits unsigned number
    */
-  tryReadUint32(littleEndian?: boolean): Result<number, CursorUnknownError> {
-    const x = this.tryGetUint32(littleEndian)
-
-    if (x.isOk())
-      this.offset += 4
-
-    return x
+  tryReadUint32(littleEndian?: boolean): Result<number, CursorReadUnknownError> {
+    return this.tryGetUint32(littleEndian).inspectSync(() => this.offset += 4)
   }
 
   /**
    * Set a 32-bits unsigned number
    * @param x 32-bits unsigned number
    */
-  trySetUint32(x: number, littleEndian?: boolean): Result<void, CursorUnknownError> {
+  trySetUint32(x: number, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
     try {
       return new Ok(this.data.setUint32(this.offset, x, littleEndian))
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `setUint32 failed`, { cause: e }))
+      return new Err(new CursorWriteUnknownError(this, `setUint32 failed`, { cause: e }))
     }
   }
 
@@ -420,24 +406,19 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Write a 32-bits unsigned number
    * @param x 32-bits unsigned number
    */
-  tryWriteUint32(x: number, littleEndian?: boolean): Result<void, CursorUnknownError> {
-    const result = this.trySetUint32(x, littleEndian)
-
-    if (result.isOk())
-      this.offset += 4
-
-    return result
+  tryWriteUint32(x: number, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
+    return this.trySetUint32(x, littleEndian).inspectSync(() => this.offset += 4)
   }
 
   /**
    * Get a 64-bits unsigned number
    * @returns 64-bits unsigned number
    */
-  tryGetUint64(littleEndian?: boolean): Result<bigint, CursorUnknownError> {
+  tryGetUint64(littleEndian?: boolean): Result<bigint, CursorReadUnknownError> {
     try {
       return new Ok(this.data.getBigUint64(this.offset, littleEndian))
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `getBigUint64 failed`, { cause: e }))
+      return new Err(new CursorReadUnknownError(this, `getBigUint64 failed`, { cause: e }))
     }
   }
 
@@ -445,24 +426,19 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Read a 64-bits unsigned number
    * @returns 64-bits unsigned number
    */
-  tryReadUint64(littleEndian?: boolean): Result<bigint, CursorUnknownError> {
-    const x = this.tryGetUint64(littleEndian)
-
-    if (x.isOk())
-      this.offset += 8
-
-    return x
+  tryReadUint64(littleEndian?: boolean): Result<bigint, CursorReadUnknownError> {
+    return this.tryGetUint64(littleEndian).inspectSync(() => this.offset += 8)
   }
 
   /**
    * Set a 64-bits unsigned number
    * @param x 64-bits unsigned number
    */
-  trySetUint64(x: bigint, littleEndian?: boolean): Result<void, CursorUnknownError> {
+  trySetUint64(x: bigint, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
     try {
       return new Ok(this.data.setBigUint64(this.offset, x, littleEndian))
     } catch (e: unknown) {
-      return new Err(new CursorUnknownError(this, `setBigUint64 failed`, { cause: e }))
+      return new Err(new CursorWriteUnknownError(this, `setBigUint64 failed`, { cause: e }))
     }
   }
 
@@ -470,13 +446,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Write a 64-bits unsigned number
    * @param x 64-bits unsigned number
    */
-  tryWriteUint64(x: bigint, littleEndian?: boolean): Result<void, CursorUnknownError> {
-    const result = this.trySetUint64(x, littleEndian)
-
-    if (result.isOk())
-      this.offset += 8
-
-    return result
+  tryWriteUint64(x: bigint, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
+    return this.trySetUint64(x, littleEndian).inspectSync(() => this.offset += 8)
   }
 
   /**
@@ -485,13 +456,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param encoding encoding
    * @returns string
    */
-  tryGetString(length: number, encoding?: BufferEncoding): Result<string, CursorReadOverflowError> {
-    const subarray = this.tryGet(length)
-
-    if (subarray.isErr())
-      return subarray
-
-    return new Ok(Buffers.fromView(subarray.inner).toString(encoding))
+  tryGetString(length: number, encoding?: BufferEncoding): Result<string, CursorReadLengthOverflowError> {
+    return this.tryGet(length).mapSync(subarray => Buffers.fromView(subarray).toString(encoding))
   }
 
   /**
@@ -500,13 +466,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param encoding encoding
    * @returns string
    */
-  tryReadString(length: number, encoding?: BufferEncoding): Result<string, CursorReadOverflowError> {
-    const subarray = this.tryRead(length)
-
-    if (subarray.isErr())
-      return subarray
-
-    return new Ok(Buffers.fromView(subarray.inner).toString(encoding))
+  tryReadString(length: number, encoding?: BufferEncoding): Result<string, CursorReadLengthOverflowError> {
+    return this.tryRead(length).mapSync(subarray => Buffers.fromView(subarray).toString(encoding))
   }
 
   /**
@@ -514,7 +475,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param text string
    * @param encoding encoding
    */
-  trySetString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteOverflowError> {
+  trySetString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteLengthOverflowError> {
     return this.trySet(Buffer.from(text, encoding))
   }
 
@@ -523,21 +484,21 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param text string
    * @param encoding encoding
    */
-  tryWriteString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteOverflowError> {
+  tryWriteString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteLengthOverflowError> {
     return this.tryWrite(Buffer.from(text, encoding))
   }
 
   /**
    * Get the first NULL (byte 0) index relative to the current offset
    */
-  tryGetNull(): Result<number, CursorNullError> {
+  tryGetNull(): Result<number, CursorReadNullOverflowError> {
     let i = this.offset
 
     while (i < this.bytes.length && this.bytes[i] > 0)
       i++
 
     if (i === this.bytes.length)
-      return new Err(new CursorNullError(this))
+      return new Err(new CursorReadNullOverflowError(this))
 
     return new Ok(i)
   }
@@ -546,38 +507,23 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Get a NULL-terminated subarray
    * @returns subarray of the bytes
    */
-  tryGetNulled(): Result<Bytes, CursorNullError> {
-    const index = this.tryGetNull()
-
-    if (index.isErr())
-      return index
-
-    return this.tryGet(index.inner)
+  tryGetNulled(): Result<Bytes, CursorReadOverflowError> {
+    return this.tryGetNull().andThenSync(index => this.tryGet(index))
   }
 
   /**
    * Read a NULL-terminated subarray
    * @returns subarray of the bytes
    */
-  tryReadNulled(): Result<Bytes, CursorNullError | CursorReadOverflowError> {
-    const index = this.tryGetNull()
-
-    if (index.isErr())
-      return index
-
-    const subarray = this.tryRead(index.inner)
-
-    if (subarray.isOk())
-      this.offset += subarray.inner.length
-
-    return subarray
+  tryReadNulled(): Result<Bytes, CursorReadOverflowError> {
+    return this.tryGetNull().andThenSync(index => this.tryRead(index))
   }
 
   /**
    * Set a NULL-terminated array
    * @param array array
    */
-  trySetNulled(array: Bytes): Result<void, CursorWriteOverflowError | CursorUnknownError> {
+  trySetNulled(array: Bytes): Result<void, CursorWriteError> {
     const start = this.offset
     const result = this.tryWriteNulled(array)
     this.offset = start
@@ -588,13 +534,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Write a NULL-terminated array
    * @param array array
    */
-  tryWriteNulled(array: Bytes): Result<void, CursorWriteOverflowError | CursorUnknownError> {
-    const result = this.tryWrite(array)
-
-    if (result.isErr())
-      return result
-
-    return this.tryWriteUint8(0)
+  tryWriteNulled(array: Bytes): Result<void, CursorWriteError> {
+    return this.tryWrite(array).andThenSync(() => this.tryWriteUint8(0))
   }
 
   /**
@@ -602,13 +543,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param encoding encoding
    * @returns string
    */
-  tryGetNulledString(encoding?: BufferEncoding): Result<string, CursorNullError> {
-    const subarray = this.tryGetNulled()
-
-    if (subarray.isErr())
-      return subarray
-
-    return new Ok(Buffers.fromView(subarray.inner).toString(encoding))
+  tryGetNulledString(encoding?: BufferEncoding): Result<string, CursorReadOverflowError> {
+    return this.tryGetNulled().mapSync(subarray => Buffers.fromView(subarray).toString(encoding))
   }
 
   /**
@@ -616,13 +552,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param encoding encoding
    * @returns string
    */
-  tryReadNulledString(encoding?: BufferEncoding): Result<string, CursorNullError> {
-    const subarray = this.tryReadNulled()
-
-    if (subarray.isErr())
-      return subarray
-
-    return new Ok(Buffers.fromView(subarray.inner).toString(encoding))
+  tryReadNulledString(encoding?: BufferEncoding): Result<string, CursorReadOverflowError> {
+    return this.tryReadNulled().mapSync(subarray => Buffers.fromView(subarray).toString(encoding))
   }
 
   /**
@@ -630,7 +561,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param text string
    * @param encoding encoding
    */
-  trySetNulledString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteOverflowError | CursorUnknownError> {
+  trySetNulledString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteError> {
     return this.trySetNulled(Buffer.from(text, encoding))
   }
 
@@ -639,7 +570,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param text string
    * @param encoding encoding
    */
-  tryWriteNulledString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteOverflowError | CursorUnknownError> {
+  tryWriteNulledString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteError> {
     return this.tryWriteNulled(Buffer.from(text, encoding))
   }
 
@@ -658,7 +589,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns 
    */
-  *trySplit(length: number): Generator<Bytes, Result<void, CursorReadOverflowError>> {
+  *trySplit(length: number): Generator<Bytes, Result<void, CursorReadLengthOverflowError>> {
     while (this.remaining >= length) {
       const subarray = this.tryRead(length)
 
