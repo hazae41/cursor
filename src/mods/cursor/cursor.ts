@@ -588,14 +588,14 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns 
    */
-  *trySplit(length: number): Generator<Bytes, Result<void, CursorReadLengthOverflowError>> {
+  *trySplit(length: number): Iterator<Bytes, Result<void, CursorReadLengthOverflowError>> {
     while (this.remaining >= length) {
       const subarray = this.tryRead(length)
 
       if (subarray.isErr())
         return subarray
-
-      yield subarray.inner
+      else
+        yield subarray.inner
     }
 
     if (this.remaining) {
@@ -603,8 +603,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
       if (subarray.isErr())
         return subarray
-
-      yield subarray.inner
+      else
+        yield subarray.inner
     }
 
     return Ok.void()
