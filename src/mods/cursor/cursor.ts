@@ -216,7 +216,6 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   /**
    * Read a subarray of the bytes
    * @param length 
-   * @param shallow 
    * @returns subarray of the bytes
    */
   tryRead<N extends number>(length: N): Result<Bytes<N>, CursorReadLengthOverflowError> {
