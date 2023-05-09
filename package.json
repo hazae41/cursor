@@ -7,9 +7,6 @@
   "repository": "github:hazae41/cursor",
   "author": "hazae41",
   "license": "MIT",
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/esm/index.mjs",
-  "types": "./dist/types/index.d.ts",
   "sideEffects": false,
   "files": [
     "./dist/esm",
