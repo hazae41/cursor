@@ -1,12 +1,15 @@
 {
   "type": "module",
   "name": "@hazae41/cursor",
-  "version": "1.1.10",
+  "version": "1.1.9",
   "description": "Rust-like Cursor for TypeScript",
   "homepage": "https://github.com/hazae41/cursor",
   "repository": "github:hazae41/cursor",
   "author": "hazae41",
   "license": "MIT",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/types/index.d.ts",
   "sideEffects": false,
   "files": [
     "./dist/esm",
