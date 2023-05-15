@@ -588,7 +588,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns 
    */
-  *trySplit(length: number): Iterator<Bytes, Result<void, CursorReadLengthOverflowError>> {
+  *trySplit(length: number): Generator<Bytes, Result<void, CursorReadLengthOverflowError>> {
     while (this.remaining >= length) {
       const subarray = this.tryRead(length)
 
