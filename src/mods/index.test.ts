@@ -1,1 +1,1 @@
-export * from "./cursor/cursor.test.js";
+export * from "./cursor/index.test.js";

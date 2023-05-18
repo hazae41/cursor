@@ -2,78 +2,7 @@ import { Bytes, Sized } from "@hazae41/bytes"
 import { Err, Ok, Result } from "@hazae41/result"
 import { Buffers } from "libs/buffers/buffers.js"
 import { DataViews } from "libs/dataviews/dataviews.js"
-
-export type CursorError =
-  | CursorReadError
-  | CursorWriteError
-
-export type CursorReadError =
-  | CursorReadOverflowError
-  | CursorReadUnknownError
-
-export type CursorReadOverflowError =
-  | CursorReadLengthOverflowError
-  | CursorReadNullOverflowError
-
-export type CursorWriteError =
-  | CursorWriteLengthOverflowError
-  | CursorWriteUnknownError
-
-export class CursorReadLengthOverflowError extends Error {
-  readonly #class = CursorReadLengthOverflowError
-
-  constructor(
-    readonly cursor: Cursor,
-    readonly length: number
-  ) {
-    super(`Cursor: Overflow reading ${length} bytes at offset ${cursor.offset}/${cursor.length}`)
-  }
-}
-
-export class CursorWriteLengthOverflowError extends Error {
-  readonly #class = CursorWriteLengthOverflowError
-
-  constructor(
-    readonly cursor: Cursor,
-    readonly length: number
-  ) {
-    super(`Cursor: Overflow writing ${length} bytes at offset ${cursor.offset}/${cursor.length}`)
-  }
-}
-
-export class CursorReadNullOverflowError extends Error {
-  readonly #class = CursorReadNullOverflowError
-
-  constructor(
-    readonly cursor: Cursor
-  ) {
-    super(`Cursor: Overflow reading null byte at offset ${cursor.offset}/${cursor.length}`)
-  }
-}
-
-export class CursorReadUnknownError extends Error {
-  readonly #class = CursorReadUnknownError
-
-  constructor(
-    readonly cursor: Cursor,
-    readonly message: string,
-    readonly options?: ErrorOptions
-  ) {
-    super(`Cursor: ${message}`)
-  }
-}
-
-export class CursorWriteUnknownError extends Error {
-  readonly #class = CursorWriteUnknownError
-
-  constructor(
-    readonly cursor: Cursor,
-    readonly message: string,
-    readonly options?: ErrorOptions
-  ) {
-    super(`Cursor: ${message}`)
-  }
-}
+import { CursorReadLengthOverflowError, CursorReadNullOverflowError, CursorReadOverflowError, CursorReadUnknownError, CursorWriteError, CursorWriteLengthOverflowError, CursorWriteUnknownError } from "./errors.js"
 
 export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   readonly #class = Cursor
