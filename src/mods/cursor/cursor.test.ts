@@ -1,6 +1,5 @@
 import { Bytes } from "@hazae41/bytes";
 import { assert, test } from "@hazae41/phobos";
-import { Result } from "@hazae41/result";
 import { Cursor } from "mods/cursor/cursor.js";
 import { webcrypto } from "node:crypto";
 import { relative, resolve } from "node:path";
@@ -8,11 +7,6 @@ import { relative, resolve } from "node:path";
 const directory = resolve("./dist/test/")
 const { pathname } = new URL(import.meta.url)
 console.log(relative(directory, pathname.replace(".mjs", ".ts")))
-
-test("From view", async () => {
-  const view = new Uint32Array([12345, 54321])
-  const cursor = new Cursor(view, 120)
-})
 
 test("Allocation", async () => {
   for (let i = 0; i < 32; i++) {
@@ -44,17 +38,12 @@ test("write then read", async () => {
 
   assert(bytes.length === bytes2.length)
   assert(Bytes.equals(bytes, bytes2))
+
+  const overflowing = Buffer.from([1, 2, 3, 4, 5])
+
+  assert(cursor.tryWrite(overflowing).ignore().isErr())
+  assert(cursor.tryRead(overflowing.length).ignore().isErr())
 })
-
-// test("out of bound write then read", async () => {
-//   return
-
-//   const buffer = Buffer.from([1, 2, 3, 4, 5])
-//   const cursor = Cursor.allocUnsafe(4)
-
-//   assert(throws(() => cursor.write(buffer)))
-//   assert(throws(() => cursor.read(buffer.length)))
-// })
 
 test("writeUint8 then readUint8", async () => {
   const cursor = Cursor.allocUnsafe(1)
@@ -77,8 +66,8 @@ test("writeUint8 then readUint8", async () => {
 
   cursor.offset = 0
 
-  // assert(throws(() => cursor.writeUint8(2 ** 8)))
-  // assert(throws(() => cursor.writeUint8(-1)))
+  // assert(cursor.tryWriteUint8(2 ** 8).ignore().isErr())
+  // assert(cursor.tryWriteUint8(-1).ignore().isErr())
 })
 
 test("writeUint16 then readUint16", async () => {
@@ -100,8 +89,8 @@ test("writeUint16 then readUint16", async () => {
 
   cursor.offset = 0
 
-  // assert(throws(() => cursor.writeUint16(2 ** 16)))
-  // assert(throws(() => cursor.writeUint16(-1)))
+  // assert(cursor.tryWriteUint16(2 ** 16).ignore().isErr())
+  // assert(cursor.tryWriteUint16(-1).ignore().isErr())
 })
 
 test("writeUint24 then readUint24", async () => {
@@ -123,8 +112,8 @@ test("writeUint24 then readUint24", async () => {
 
   cursor.offset = 0
 
-  // assert(throws(() => cursor.writeUint16(2 ** 24)))
-  // assert(throws(() => cursor.writeUint16(-1)))
+  assert(cursor.tryWriteUint24(2 ** 24).ignore().isErr())
+  assert(cursor.tryWriteUint24(-1).ignore().isErr())
 })
 
 test("writeUint32 then readUint32", async () => {
@@ -146,8 +135,8 @@ test("writeUint32 then readUint32", async () => {
 
   cursor.offset = 0
 
-  // assert(throws(() => cursor.writeUint16(2 ** 32)))
-  // assert(throws(() => cursor.writeUint16(-1)))
+  // assert(cursor.tryWriteUint32(2 ** 32).ignore().isErr())
+  // assert(cursor.tryWriteUint32(-1).ignore().isErr())
 })
 
 test("fill", async ({ test }) => {
@@ -168,12 +157,12 @@ test("split", async ({ test }) => {
   const splitter = cursor.trySplit(100)
   const chunks = new Array<Bytes>()
 
-  let result: IteratorResult<Bytes, Result<void, Error>>
+  let result = splitter.next()
 
-  while (!(result = splitter.next()).done)
+  for (; !result.done; result = splitter.next())
     chunks.push(result.value)
-  if (result.value.isErr())
-    return result.value.unwrap()
+
+  result.value.unwrap()
 
   assert(chunks[0].length === 100)
   assert(chunks[1].length === 100)

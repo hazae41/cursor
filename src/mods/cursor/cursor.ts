@@ -524,7 +524,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
       if (subarray.isErr())
         return subarray
       else
-        yield subarray.inner
+        yield subarray.get()
     }
 
     if (this.remaining) {
@@ -533,7 +533,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
       if (subarray.isErr())
         return subarray
       else
-        yield subarray.inner
+        yield subarray.get()
     }
 
     return Ok.void()
