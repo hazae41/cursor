@@ -22,8 +22,8 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "@hazae41/bytes": "^1.1.9",
-    "@hazae41/result": "^1.0.24"
+    "@hazae41/bytes": "^1.1.10",
+    "@hazae41/result": "^1.0.26"
   },
   "devDependencies": {
     "@hazae41/phobos": "^1.0.10",
