@@ -30,6 +30,103 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     this.offset = offset
   }
 
+  static new<T extends ArrayBufferView>(inner: T, offset?: number) {
+    return new Cursor(inner, offset)
+  }
+
+  /**
+   * Create a new Cursor using Bytes.empty
+   * @deprecated
+   * @returns 
+   */
+  static empty(): Cursor<Bytes<0>> {
+    return new Cursor(Bytes.empty())
+  }
+
+  /**
+   * Create a new Cursor using Bytes.tryEmpty
+   * @returns 
+   */
+  static tryEmpty(): Result<Cursor<Bytes<0>>, BytesAllocError<0>> {
+    return Bytes.tryEmpty().mapSync(Cursor.new)
+  }
+
+  /**
+   * Create a new Cursor using Bytes.alloc
+   * @deprecated
+   * @param length 
+   * @returns Cursor
+   */
+  static alloc<N extends number>(length: N): Cursor<Bytes<N>> {
+    return new Cursor(Bytes.alloc(length))
+  }
+
+  /**
+   * Create a new Cursor using Bytes.tryAlloc
+   * @param length 
+   * @returns Cursor
+   */
+  static tryAlloc<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
+    return Bytes.tryAlloc(length).mapSync(Cursor.new)
+  }
+
+  /**
+   * Create a new Cursor using Bytes.allocUnsafe
+   * @deprecated
+   * @param length 
+   * @returns Cursor
+   */
+  static allocUnsafe<N extends number>(length: N): Cursor<Bytes<N>> {
+    return new Cursor(Bytes.allocUnsafe(length))
+  }
+
+  /**
+   * Create a new Cursor using Bytes.tryAllocUnsafe
+   * @param length 
+   * @returns Cursor
+   */
+  static tryAllocUnsafe<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
+    return Bytes.tryAllocUnsafe(length).mapSync(Cursor.new)
+  }
+
+  /**
+   * Create a new Cursor using Bytes.from
+   * @deprecated
+   * @param sized 
+   * @returns 
+   */
+  static from<N extends number>(sized: Sized<number, N>): Cursor<Bytes<N>> {
+    return new Cursor(Bytes.from(sized))
+  }
+
+  /**
+   * Create a new Cursor using Bytes.tryFrom
+   * @param sized 
+   * @returns 
+   */
+  static tryFrom<N extends number>(sized: Sized<number, N>): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
+    return Bytes.tryFrom(sized).mapSync(Cursor.new)
+  }
+
+  /**
+   * Create a new Cursor using Bytes.random
+   * @deprecated
+   * @param length 
+   * @returns Cursor
+   */
+  static random<N extends number>(length: N): Cursor<Bytes<N>> {
+    return new Cursor(Bytes.random(length))
+  }
+
+  /**
+   * Create a new Cursor using Bytes.tryRandom
+   * @param length 
+   * @returns Cursor
+   */
+  static tryRandom<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
+    return Bytes.tryRandom(length).mapSync(Cursor.new)
+  }
+
   get inner() {
     return this.#inner
   }
@@ -52,99 +149,6 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
   get buffer() {
     return this.#buffer
-  }
-
-  /**
-   * Create a new Cursor using Bytes.empty
-   * @deprecated
-   * @returns 
-   */
-  static empty(): Cursor<Bytes<0>> {
-    return new Cursor(Bytes.empty())
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryEmpty
-   * @returns 
-   */
-  static tryEmpty(): Result<Cursor<Bytes<0>>, BytesAllocError<0>> {
-    return Bytes.tryEmpty().mapSync(x => new Cursor(x))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.alloc
-   * @deprecated
-   * @param length 
-   * @returns Cursor
-   */
-  static alloc<N extends number>(length: N): Cursor<Bytes<N>> {
-    return new Cursor(Bytes.alloc(length))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryAlloc
-   * @param length 
-   * @returns Cursor
-   */
-  static tryAlloc<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
-    return Bytes.tryAlloc(length).mapSync(x => new Cursor(x))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.allocUnsafe
-   * @deprecated
-   * @param length 
-   * @returns Cursor
-   */
-  static allocUnsafe<N extends number>(length: N): Cursor<Bytes<N>> {
-    return new Cursor(Bytes.allocUnsafe(length))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryAllocUnsafe
-   * @param length 
-   * @returns Cursor
-   */
-  static tryAllocUnsafe<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
-    return Bytes.tryAllocUnsafe(length).mapSync(x => new Cursor(x))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.from
-   * @deprecated
-   * @param sized 
-   * @returns 
-   */
-  static from<N extends number>(sized: Sized<number, N>): Cursor<Bytes<N>> {
-    return new Cursor(Bytes.from(sized))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryFrom
-   * @param sized 
-   * @returns 
-   */
-  static tryFrom<N extends number>(sized: Sized<number, N>): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
-    return Bytes.tryFrom(sized).mapSync(x => new Cursor(x))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.random
-   * @deprecated
-   * @param length 
-   * @returns Cursor
-   */
-  static random<N extends number>(length: N): Cursor<Bytes<N>> {
-    return new Cursor(Bytes.random(length))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryRandom
-   * @param length 
-   * @returns Cursor
-   */
-  static tryRandom<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
-    return Bytes.tryRandom(length).mapSync(x => new Cursor(x))
   }
 
   /**
