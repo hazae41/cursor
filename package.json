@@ -22,7 +22,7 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "@hazae41/bytes": "^1.1.16",
+    "@hazae41/bytes": "^1.1.18",
     "@hazae41/result": "^1.0.38"
   },
   "devDependencies": {
