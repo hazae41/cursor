@@ -188,7 +188,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    */
   tryGet<N extends number>(length: N): Result<Bytes<N>, CursorReadLengthOverflowError> {
     if (this.remaining < length)
-      return new Err(new CursorReadLengthOverflowError(this, length))
+      return new Err(CursorReadLengthOverflowError.from(this, length))
 
     const subarray = this.bytes.subarray(this.offset, this.offset + length)
 
@@ -210,7 +210,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    */
   trySet(array: Uint8Array): Result<void, CursorWriteLengthOverflowError> {
     if (this.remaining < array.length)
-      return new Err(new CursorWriteLengthOverflowError(this, array.length))
+      return new Err(CursorWriteLengthOverflowError.from(this, array.length))
 
     return new Ok(this.bytes.set(array, this.offset))
   }
@@ -230,8 +230,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   tryGetUint8(): Result<number, CursorReadUnknownError> {
     try {
       return new Ok(this.data.getUint8(this.offset))
-    } catch (e: unknown) {
-      return new Err(new CursorReadUnknownError(this, `getUint8 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorReadUnknownError(`getUint8 failed`, { cause }))
     }
   }
 
@@ -250,8 +250,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   trySetUint8(x: number): Result<void, CursorWriteUnknownError> {
     try {
       return new Ok(this.data.setUint8(this.offset, x))
-    } catch (e: unknown) {
-      return new Err(new CursorWriteUnknownError(this, `setUint8 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorWriteUnknownError(`setUint8 failed`, { cause }))
     }
   }
 
@@ -270,8 +270,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   tryGetUint16(littleEndian?: boolean): Result<number, CursorReadUnknownError> {
     try {
       return new Ok(this.data.getUint16(this.offset, littleEndian))
-    } catch (e: unknown) {
-      return new Err(new CursorReadUnknownError(this, `getUint16 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorReadUnknownError(`getUint16 failed`, { cause }))
     }
   }
 
@@ -290,8 +290,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   trySetUint16(x: number, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
     try {
       return new Ok(this.data.setUint16(this.offset, x, littleEndian))
-    } catch (e: unknown) {
-      return new Err(new CursorWriteUnknownError(this, `setUint16 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorWriteUnknownError(`setUint16 failed`, { cause }))
     }
   }
 
@@ -313,8 +313,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
         return new Ok(this.buffer.readUIntLE(this.offset, 3))
       else
         return new Ok(this.buffer.readUIntBE(this.offset, 3))
-    } catch (e: unknown) {
-      return new Err(new CursorReadUnknownError(this, `getUint24 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorReadUnknownError(`getUint24 failed`, { cause }))
     }
   }
 
@@ -338,8 +338,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
         this.buffer.writeUIntBE(x, this.offset, 3)
 
       return Ok.void()
-    } catch (e: unknown) {
-      return new Err(new CursorWriteUnknownError(this, `setUint24 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorWriteUnknownError(`setUint24 failed`, { cause }))
     }
   }
 
@@ -358,8 +358,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   tryGetUint32(littleEndian?: boolean): Result<number, CursorReadUnknownError> {
     try {
       return new Ok(this.data.getUint32(this.offset, littleEndian))
-    } catch (e: unknown) {
-      return new Err(new CursorReadUnknownError(this, `getUint32 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorReadUnknownError(`getUint32 failed`, { cause }))
     }
   }
 
@@ -378,8 +378,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   trySetUint32(x: number, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
     try {
       return new Ok(this.data.setUint32(this.offset, x, littleEndian))
-    } catch (e: unknown) {
-      return new Err(new CursorWriteUnknownError(this, `setUint32 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorWriteUnknownError(`setUint32 failed`, { cause }))
     }
   }
 
@@ -398,8 +398,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   tryGetUint64(littleEndian?: boolean): Result<bigint, CursorReadUnknownError> {
     try {
       return new Ok(this.data.getBigUint64(this.offset, littleEndian))
-    } catch (e: unknown) {
-      return new Err(new CursorReadUnknownError(this, `getBigUint64 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorReadUnknownError(`getBigUint64 failed`, { cause }))
     }
   }
 
@@ -418,8 +418,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   trySetUint64(x: bigint, littleEndian?: boolean): Result<void, CursorWriteUnknownError> {
     try {
       return new Ok(this.data.setBigUint64(this.offset, x, littleEndian))
-    } catch (e: unknown) {
-      return new Err(new CursorWriteUnknownError(this, `setBigUint64 failed`, { cause: e }))
+    } catch (cause: unknown) {
+      return new Err(new CursorWriteUnknownError(`setBigUint64 failed`, { cause }))
     }
   }
 
@@ -479,7 +479,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
       i++
 
     if (i === this.bytes.length)
-      return new Err(new CursorReadNullOverflowError(this))
+      return new Err(CursorReadNullOverflowError.from(this))
 
     return new Ok(i)
   }

@@ -18,56 +18,63 @@ export type CursorWriteError =
 
 export class CursorReadLengthOverflowError extends Error {
   readonly #class = CursorReadLengthOverflowError
+  readonly name = this.#class.name
 
   constructor(
-    readonly cursor: Cursor,
-    readonly length: number
+    readonly cursorOffset: number,
+    readonly cursorLength: number,
+    readonly bytesLength: number
   ) {
-    super(`Overflow reading ${length} bytes at offset ${cursor.offset}/${cursor.length}`)
+    super(`Overflow reading ${bytesLength} bytes at offset ${cursorOffset}/${cursorLength}`)
   }
+
+  static from(cursor: Cursor, bytesLength: number) {
+    return new CursorReadLengthOverflowError(cursor.offset, cursor.length, bytesLength)
+  }
+
 }
 
 export class CursorWriteLengthOverflowError extends Error {
   readonly #class = CursorWriteLengthOverflowError
+  readonly name = this.#class.name
 
   constructor(
-    readonly cursor: Cursor,
-    readonly length: number
+    readonly cursorOffset: number,
+    readonly cursorLength: number,
+    readonly bytesLength: number
   ) {
-    super(`Overflow writing ${length} bytes at offset ${cursor.offset}/${cursor.length}`)
+    super(`Overflow writing ${bytesLength} bytes at offset ${cursorOffset}/${cursorLength}`)
   }
+
+  static from(cursor: Cursor, bytesLength: number) {
+    return new CursorWriteLengthOverflowError(cursor.offset, cursor.length, bytesLength)
+  }
+
 }
 
 export class CursorReadNullOverflowError extends Error {
   readonly #class = CursorReadNullOverflowError
+  readonly name = this.#class.name
 
   constructor(
-    readonly cursor: Cursor
+    readonly cursorOffset: number,
+    readonly cursorLength: number
   ) {
-    super(`Overflow reading null byte at offset ${cursor.offset}/${cursor.length}`)
+    super(`Overflow reading null byte at offset ${cursorOffset}/${cursorLength}`)
   }
+
+  static from(cursor: Cursor) {
+    return new CursorReadNullOverflowError(cursor.offset, cursor.length)
+  }
+
 }
 
 export class CursorReadUnknownError extends Error {
   readonly #class = CursorReadUnknownError
-
-  constructor(
-    readonly cursor: Cursor,
-    readonly message: string,
-    readonly options?: ErrorOptions
-  ) {
-    super(message, options)
-  }
+  readonly name = this.#class.name
 }
 
 export class CursorWriteUnknownError extends Error {
   readonly #class = CursorWriteUnknownError
-
-  constructor(
-    readonly cursor: Cursor,
-    readonly message: string,
-    readonly options?: ErrorOptions
-  ) {
-    super(message, options)
-  }
+  readonly name = this.#class.name
 }
