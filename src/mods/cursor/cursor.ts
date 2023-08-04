@@ -22,11 +22,6 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    */
   constructor(inner: T, offset = 0) {
     this.#inner = inner
-
-    this.#bytes = Bytes.fromView(inner)
-    this.#data = DataViews.fromView(inner)
-    this.#buffer = Buffers.fromView(inner)
-
     this.offset = offset
   }
 
@@ -133,6 +128,10 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
   set inner(inner: T) {
     this.#inner = inner
+
+    this.#bytes = undefined
+    this.#data = undefined
+    this.#buffer = undefined
   }
 
   get bytes() {
