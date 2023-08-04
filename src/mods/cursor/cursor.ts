@@ -227,19 +227,15 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Get a 8-bits unsigned number
    * @returns 8-bits unsigned number
    */
-  tryGetUint8(): Result<number, CursorReadUnknownError> {
-    try {
-      return new Ok(this.data.getUint8(this.offset))
-    } catch (cause: unknown) {
-      return new Err(new CursorReadUnknownError(`getUint8 failed`, { cause }))
-    }
+  tryGetUint8(): Result<number, never> {
+    return new Ok(this.bytes[this.offset])
   }
 
   /**
    * Read a 8-bits unsigned number
    * @returns 8-bits unsigned number
    */
-  tryReadUint8(): Result<number, CursorReadUnknownError> {
+  tryReadUint8(): Result<number, never> {
     return this.tryGetUint8().inspectSync(() => this.offset++)
   }
 
@@ -247,19 +243,16 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Set a 8-bits unsigned number
    * @param x 8-bits unsigned number
    */
-  trySetUint8(x: number): Result<void, CursorWriteUnknownError> {
-    try {
-      return new Ok(this.data.setUint8(this.offset, x))
-    } catch (cause: unknown) {
-      return new Err(new CursorWriteUnknownError(`setUint8 failed`, { cause }))
-    }
+  trySetUint8(x: number): Result<void, never> {
+    this.bytes[this.offset] = x
+    return Ok.void()
   }
 
   /**
    * Write a 8-bits unsigned number
    * @param x 8-bits unsigned number
    */
-  tryWriteUint8(x: number): Result<void, CursorWriteUnknownError> {
+  tryWriteUint8(x: number): Result<void, never> {
     return this.trySetUint8(x).inspectSync(() => this.offset++)
   }
 
