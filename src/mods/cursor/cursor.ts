@@ -9,9 +9,9 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
   #inner: T
 
-  #bytes: Uint8Array
-  #data: DataView
-  #buffer: Buffer
+  #bytes?: Uint8Array
+  #data?: DataView
+  #buffer?: Buffer
 
   offset: number
 
@@ -133,22 +133,18 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
   set inner(inner: T) {
     this.#inner = inner
-
-    this.#bytes = Bytes.fromView(inner)
-    this.#data = DataViews.fromView(inner)
-    this.#buffer = Buffers.fromView(inner)
   }
 
   get bytes() {
-    return this.#bytes
+    return this.#bytes ??= Bytes.fromView(this.inner)
   }
 
   get data() {
-    return this.#data
+    return this.#data ??= DataViews.fromView(this.inner)
   }
 
   get buffer() {
-    return this.#buffer
+    return this.#buffer ??= Buffers.fromView(this.inner)
   }
 
   /**
