@@ -2,6 +2,7 @@ import { Bytes, BytesAllocError, Sized } from "@hazae41/bytes"
 import { Err, Ok, Result } from "@hazae41/result"
 import { Buffers } from "libs/buffers/buffers.js"
 import { DataViews } from "libs/dataviews/dataviews.js"
+import { Utf8 } from "libs/utf8/utf8.js"
 import { CursorReadLengthOverflowError, CursorReadNullOverflowError, CursorReadOverflowError, CursorReadUnknownError, CursorWriteError, CursorWriteLengthOverflowError, CursorWriteUnknownError } from "./errors.js"
 
 export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
@@ -420,41 +421,53 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   /**
-   * Get a fixed-length string
-   * @param length byte length of the string
-   * @param encoding encoding
-   * @returns string
+   * Zero-copy get a UTF-8 string
+   * @warning It can return a string whose length is between (length) and (length / 3)
+   * @param length 
+   * @returns 
    */
-  tryGetString(length: number, encoding?: BufferEncoding): Result<string, CursorReadLengthOverflowError> {
-    return this.tryGet(length).mapSync(subarray => Buffers.fromView(subarray).toString(encoding))
+  tryGetUtf8(length: number) {
+    return this.tryGet(length).mapSync(Utf8.decoder.decode)
   }
 
   /**
-   * Read a fixed-length string
-   * @param length byte length of the string
-   * @param encoding encoding
-   * @returns string
+   * Zero-copy read a UTF-8 string
+   * @warning It can return a string whose length is between (length) and (length / 3)
+   * @param length 
+   * @returns 
    */
-  tryReadString(length: number, encoding?: BufferEncoding): Result<string, CursorReadLengthOverflowError> {
-    return this.tryRead(length).mapSync(subarray => Buffers.fromView(subarray).toString(encoding))
+  tryReadUtf8(length: number) {
+    return this.tryRead(length).mapSync(Utf8.decoder.decode)
   }
 
   /**
-   * Set a fixed-length string
-   * @param text string
-   * @param encoding encoding
+   * Zero-copy set a UTF-8 string
+   * @warning It can write between (text.length) and (text.length * 3) bytes
+   * @param text 
+   * @returns 
    */
-  trySetString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteLengthOverflowError> {
-    return this.trySet(Buffer.from(text, encoding))
+  trySetUtf8(text: string) {
+    const result = Utf8.encoder.encodeInto(text, this.after)
+
+    if (result.read! !== text.length)
+      return new Err(new CursorWriteUnknownError())
+    return Ok.void()
   }
 
   /**
-   * Write a fixed-length string
-   * @param text string
-   * @param encoding encoding
+   * Zero-copy write a UTF-8 string
+   * @warning It can write between (text.length) and (text.length * 3) bytes
+   * @param text 
+   * @returns 
    */
-  tryWriteString(text: string, encoding?: BufferEncoding): Result<void, CursorWriteLengthOverflowError> {
-    return this.tryWrite(Buffer.from(text, encoding))
+  tryWriteUtf8(text: string) {
+    const result = Utf8.encoder.encodeInto(text, this.after)
+
+    if (result.read! !== text.length)
+      return new Err(new CursorWriteUnknownError())
+
+    this.offset += result.written!
+    return Ok.void()
   }
 
   /**
