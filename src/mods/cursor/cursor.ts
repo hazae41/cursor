@@ -426,7 +426,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns 
    */
-  tryGetUtf8(length: number) {
+  tryGetUtf8(length: number): Result<string, CursorReadLengthOverflowError> {
     return this.tryGet(length).mapSync(Utf8.decoder.decode)
   }
 
@@ -436,7 +436,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns 
    */
-  tryReadUtf8(length: number) {
+  tryReadUtf8(length: number): Result<string, CursorReadLengthOverflowError> {
     return this.tryRead(length).mapSync(Utf8.decoder.decode)
   }
 
@@ -446,7 +446,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param text 
    * @returns 
    */
-  trySetUtf8(text: string) {
+  trySetUtf8(text: string): Result<void, CursorWriteUnknownError> {
     const result = Utf8.encoder.encodeInto(text, this.after)
 
     if (result.read! !== text.length)
@@ -460,7 +460,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param text 
    * @returns 
    */
-  tryWriteUtf8(text: string) {
+  tryWriteUtf8(text: string): Result<void, CursorWriteUnknownError> {
     const result = Utf8.encoder.encodeInto(text, this.after)
 
     if (result.read! !== text.length)
