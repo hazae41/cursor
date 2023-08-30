@@ -1,4 +1,4 @@
-import { Bytes, BytesAllocError, Sized } from "@hazae41/bytes"
+import { Bytes, BytesAllocError } from "@hazae41/bytes"
 import { Err, Ok, Result } from "@hazae41/result"
 import { Buffers } from "libs/buffers/buffers.js"
 import { DataViews } from "libs/dataviews/dataviews.js"
@@ -28,23 +28,6 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
   static new<T extends ArrayBufferView>(inner: T, offset?: number) {
     return new Cursor(inner, offset)
-  }
-
-  /**
-   * Create a new Cursor using Bytes.empty
-   * @deprecated
-   * @returns 
-   */
-  static empty(): Cursor<Bytes<0>> {
-    return new Cursor(Bytes.empty())
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryEmpty
-   * @returns 
-   */
-  static tryEmpty(): Result<Cursor<Bytes<0>>, BytesAllocError<0>> {
-    return Bytes.tryEmpty().mapSync(Cursor.new)
   }
 
   /**
@@ -83,25 +66,6 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    */
   static tryAllocUnsafe<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
     return Bytes.tryAllocUnsafe(length).mapSync(Cursor.new)
-  }
-
-  /**
-   * Create a new Cursor using Bytes.from
-   * @deprecated
-   * @param sized 
-   * @returns 
-   */
-  static from<N extends number>(sized: Sized<number, N>): Cursor<Bytes<N>> {
-    return new Cursor(Bytes.from(sized))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryFrom
-   * @param sized 
-   * @returns 
-   */
-  static tryFrom<N extends number>(sized: Sized<number, N>): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
-    return Bytes.tryFrom(sized).mapSync(Cursor.new)
   }
 
   /**

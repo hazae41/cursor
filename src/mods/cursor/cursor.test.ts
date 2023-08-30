@@ -1,6 +1,6 @@
 import { Bytes } from "@hazae41/bytes";
 import { assert, test } from "@hazae41/phobos";
-import { Debug } from "@hazae41/result";
+import { Result } from "@hazae41/result";
 import { Cursor } from "mods/cursor/cursor.js";
 import { webcrypto } from "node:crypto";
 import { relative, resolve } from "node:path";
@@ -9,7 +9,7 @@ const directory = resolve("./dist/test/")
 const { pathname } = new URL(import.meta.url)
 console.log(relative(directory, pathname.replace(".mjs", ".ts")))
 
-Debug.debug = true
+Result.debug = true
 
 test("Allocation", async () => {
   for (let i = 0; i < 32; i++) {
