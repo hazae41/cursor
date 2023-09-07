@@ -1,8 +1,6 @@
-import { Bytes } from "@hazae41/bytes";
 import { assert, test } from "@hazae41/phobos";
 import { Result } from "@hazae41/result";
 import { Cursor } from "mods/cursor/cursor.js";
-import { webcrypto } from "node:crypto";
 import { relative, resolve } from "node:path";
 
 const directory = resolve("./dist/test/")
@@ -11,36 +9,26 @@ console.log(relative(directory, pathname.replace(".mjs", ".ts")))
 
 Result.debug = true
 
-test("Allocation", async () => {
-  for (let i = 0; i < 32; i++) {
-    const cursor = Cursor.alloc(i)
-    assert(cursor.bytes.length === i)
-    assert(cursor.offset === 0)
-  }
-
-  for (let i = 0; i < 32; i++) {
-    const cursor = Cursor.allocUnsafe(i)
-    assert(cursor.bytes.length === i)
-    assert(cursor.offset === 0)
-  }
-})
+function equals(a: Uint8Array, b: Uint8Array) {
+  return Buffer.from(a).equals(Buffer.from(b))
+}
 
 test("write then read", async () => {
-  const bytes = Bytes.from([1, 2, 3, 4])
-  const cursor = Cursor.allocUnsafe(bytes.length)
+  const bytes = new Uint8Array([1, 2, 3, 4])
+  const cursor = new Cursor(new Uint8Array(bytes.length))
 
   cursor.tryWrite(bytes).unwrap()
   assert(cursor.offset === bytes.length)
-  assert(Bytes.equals(cursor.inner, bytes))
+  assert(equals(cursor.inner, bytes))
 
   cursor.offset = 0
 
   const bytes2 = cursor.tryRead(bytes.length).unwrap()
   assert(cursor.offset === bytes.length)
-  assert(Bytes.equals(cursor.inner, bytes2))
+  assert(equals(cursor.inner, bytes2))
 
   assert(bytes.length === bytes2.length)
-  assert(Bytes.equals(bytes, bytes2))
+  assert(equals(bytes, bytes2))
 
   const overflowing = Buffer.from([1, 2, 3, 4, 5])
 
@@ -49,21 +37,21 @@ test("write then read", async () => {
 })
 
 test("writeUint8 then readUint8", async () => {
-  const cursor = Cursor.allocUnsafe(1)
+  const cursor = new Cursor(new Uint8Array(1))
 
   const n = 42
 
   cursor.tryWriteUint8(n).unwrap()
   assert(cursor.offset === 1)
   assert(cursor.inner.length === 1)
-  assert(Bytes.equals2(cursor.inner, Bytes.from([n])))
+  assert(equals(cursor.inner, new Uint8Array([n])))
 
   cursor.offset = 0
 
   const n2 = cursor.tryReadUint8().unwrap()
   assert(cursor.offset === 1)
   assert(cursor.inner.length === 1)
-  assert(Bytes.equals2(cursor.inner, Bytes.from([n])))
+  assert(equals(cursor.inner, new Uint8Array([n])))
 
   assert(n === n2)
 
@@ -74,7 +62,7 @@ test("writeUint8 then readUint8", async () => {
 })
 
 test("writeUint16 then readUint16", async () => {
-  const cursor = Cursor.allocUnsafe(2)
+  const cursor = new Cursor(new Uint8Array(2))
 
   const n = 42
 
@@ -97,7 +85,7 @@ test("writeUint16 then readUint16", async () => {
 })
 
 test("writeUint24 then readUint24", async () => {
-  const cursor = Cursor.allocUnsafe(3)
+  const cursor = new Cursor(new Uint8Array(3))
 
   const n = 42
 
@@ -120,7 +108,7 @@ test("writeUint24 then readUint24", async () => {
 })
 
 test("writeUint32 then readUint32", async () => {
-  const cursor = Cursor.allocUnsafe(4)
+  const cursor = new Cursor(new Uint8Array(4))
 
   const n = 42
 
@@ -143,22 +131,20 @@ test("writeUint32 then readUint32", async () => {
 })
 
 test("fill", async ({ test }) => {
-  const cursor = Cursor.alloc(5)
+  const cursor = new Cursor(new Uint8Array(5))
 
   cursor.offset += 2
   cursor.fill(1, 2)
 
   const expected = new Uint8Array([0, 0, 1, 1, 0])
-  assert(Bytes.equals2(cursor.inner, expected))
+  assert(equals(cursor.inner, expected))
 })
 
 test("split", async ({ test }) => {
-  globalThis.crypto = webcrypto as any
-
-  const cursor = Cursor.random(256)
+  const cursor = new Cursor(crypto.getRandomValues(new Uint8Array(256)))
 
   const splitter = cursor.trySplit(100)
-  const chunks = new Array<Bytes>()
+  const chunks = new Array<Uint8Array>()
 
   let result = splitter.next()
 
