@@ -1,6 +1,6 @@
-import { Bytes, BytesAllocError } from "@hazae41/bytes"
 import { Err, Ok, Result } from "@hazae41/result"
 import { Buffers } from "libs/buffers/buffers.js"
+import { Uint8Arrays } from "libs/bytes/bytes.js"
 import { DataViews } from "libs/dataviews/dataviews.js"
 import { Utf8 } from "libs/utf8/utf8.js"
 import { CursorReadLengthOverflowError, CursorReadNullOverflowError, CursorReadOverflowError, CursorReadUnknownError, CursorWriteError, CursorWriteLengthOverflowError, CursorWriteUnknownError } from "./errors.js"
@@ -30,63 +30,6 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     return new Cursor(inner, offset)
   }
 
-  /**
-   * Create a new Cursor using Bytes.alloc
-   * @deprecated
-   * @param length 
-   * @returns Cursor
-   */
-  static alloc<N extends number>(length: N): Cursor<Bytes<N>> {
-    return new Cursor(Bytes.alloc(length))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryAlloc
-   * @param length 
-   * @returns Cursor
-   */
-  static tryAlloc<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
-    return Bytes.tryAlloc(length).mapSync(Cursor.new)
-  }
-
-  /**
-   * Create a new Cursor using Bytes.allocUnsafe
-   * @deprecated
-   * @param length 
-   * @returns Cursor
-   */
-  static allocUnsafe<N extends number>(length: N): Cursor<Bytes<N>> {
-    return new Cursor(Bytes.allocUnsafe(length))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryAllocUnsafe
-   * @param length 
-   * @returns Cursor
-   */
-  static tryAllocUnsafe<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
-    return Bytes.tryAllocUnsafe(length).mapSync(Cursor.new)
-  }
-
-  /**
-   * Create a new Cursor using Bytes.random
-   * @deprecated
-   * @param length 
-   * @returns Cursor
-   */
-  static random<N extends number>(length: N): Cursor<Bytes<N>> {
-    return new Cursor(Bytes.random(length))
-  }
-
-  /**
-   * Create a new Cursor using Bytes.tryRandom
-   * @param length 
-   * @returns Cursor
-   */
-  static tryRandom<N extends number>(length: N): Result<Cursor<Bytes<N>>, BytesAllocError<N>> {
-    return Bytes.tryRandom(length).mapSync(Cursor.new)
-  }
-
   get inner() {
     return this.#inner
   }
@@ -100,7 +43,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   get bytes() {
-    return this.#bytes ??= Bytes.fromView(this.inner)
+    return this.#bytes ??= Uint8Arrays.fromView(this.inner)
   }
 
   get data() {
@@ -129,7 +72,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Get a subarray of the bytes before the current offset
    * @returns subarray of the bytes before the current offset
    */
-  get before(): Bytes {
+  get before(): Uint8Array {
     return this.bytes.subarray(0, this.offset)
   }
 
@@ -137,7 +80,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Get a subarray of the bytes after the current offset
    * @returns subarray of the bytes after the current offset
    */
-  get after(): Bytes {
+  get after(): Uint8Array {
     return this.bytes.subarray(this.offset)
   }
 
@@ -146,13 +89,13 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
-  tryGet<N extends number>(length: N): Result<Bytes<N>, CursorReadLengthOverflowError> {
+  tryGet<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
     if (this.remaining < length)
       return new Err(CursorReadLengthOverflowError.from(this, length))
 
     const subarray = this.bytes.subarray(this.offset, this.offset + length)
 
-    return new Ok(subarray as Bytes<N>)
+    return new Ok(subarray as Uint8Array & { length: N })
   }
 
   /**
@@ -160,7 +103,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
-  tryRead<N extends number>(length: N): Result<Bytes<N>, CursorReadLengthOverflowError> {
+  tryRead<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
     return this.tryGet(length).inspectSync(() => this.offset += length)
   }
 
@@ -453,7 +396,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Get a NULL-terminated subarray
    * @returns subarray of the bytes
    */
-  tryGetNulled(): Result<Bytes, CursorReadOverflowError> {
+  tryGetNulled(): Result<Uint8Array, CursorReadOverflowError> {
     return this.tryGetNull().andThenSync(index => this.tryGet(index))
   }
 
@@ -461,7 +404,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Read a NULL-terminated subarray
    * @returns subarray of the bytes
    */
-  tryReadNulled(): Result<Bytes, CursorReadOverflowError> {
+  tryReadNulled(): Result<Uint8Array, CursorReadOverflowError> {
     return this.tryGetNull().andThenSync(index => this.tryRead(index))
   }
 
@@ -469,7 +412,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Set a NULL-terminated array
    * @param array array
    */
-  trySetNulled(array: Bytes): Result<void, CursorWriteError> {
+  trySetNulled(array: Uint8Array): Result<void, CursorWriteError> {
     const start = this.offset
     const result = this.tryWriteNulled(array)
     this.offset = start
@@ -480,7 +423,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Write a NULL-terminated array
    * @param array array
    */
-  tryWriteNulled(array: Bytes): Result<void, CursorWriteError> {
+  tryWriteNulled(array: Uint8Array): Result<void, CursorWriteError> {
     return this.tryWrite(array).andThenSync(() => this.tryWriteUint8(0))
   }
 
@@ -535,7 +478,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns 
    */
-  *trySplit(length: number): Generator<Bytes, Result<void, CursorReadLengthOverflowError>> {
+  *trySplit(length: number): Generator<Uint8Array, Result<void, CursorReadLengthOverflowError>> {
     while (this.remaining >= length) {
       const subarray = this.tryRead(length)
 
