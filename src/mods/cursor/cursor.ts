@@ -92,10 +92,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   getOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
-
-    const subarray = this.bytes.subarray(this.offset, this.offset + length)
-
-    return subarray as Uint8Array & { length: N }
+    return this.bytes.subarray(this.offset, this.offset + length) as Uint8Array & { length: N }
   }
 
   /**
@@ -106,10 +103,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   tryGet<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
     if (this.remaining < length)
       return new Err(CursorReadLengthOverflowError.from(this, length))
-
-    const subarray = this.bytes.subarray(this.offset, this.offset + length)
-
-    return new Ok(subarray as Uint8Array & { length: N })
+    return new Ok(this.bytes.subarray(this.offset, this.offset + length) as Uint8Array & { length: N })
   }
 
   /**
