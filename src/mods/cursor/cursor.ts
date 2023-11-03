@@ -89,6 +89,20 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
+  getOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
+    if (this.remaining < length)
+      throw CursorReadLengthOverflowError.from(this, length)
+
+    const subarray = this.bytes.subarray(this.offset, this.offset + length)
+
+    return subarray as Uint8Array & { length: N }
+  }
+
+  /**
+   * Get a subarray of the bytes
+   * @param length 
+   * @returns subarray of the bytes
+   */
   tryGet<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
     if (this.remaining < length)
       return new Err(CursorReadLengthOverflowError.from(this, length))
@@ -96,6 +110,17 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     const subarray = this.bytes.subarray(this.offset, this.offset + length)
 
     return new Ok(subarray as Uint8Array & { length: N })
+  }
+
+  /**
+   * Read a subarray of the bytes
+   * @param length 
+   * @returns subarray of the bytes
+   */
+  readOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
+    const subarray = this.getOrThrow(length)
+    this.offset += length
+    return subarray
   }
 
   /**
@@ -111,11 +136,30 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * Set an array to the bytes
    * @param array array
    */
+  setOrThrow(array: Uint8Array): void {
+    if (this.remaining < array.length)
+      throw CursorWriteLengthOverflowError.from(this, array.length)
+    this.bytes.set(array, this.offset)
+  }
+
+  /**
+   * Set an array to the bytes
+   * @param array array
+   */
   trySet(array: Uint8Array): Result<void, CursorWriteLengthOverflowError> {
     if (this.remaining < array.length)
       return new Err(CursorWriteLengthOverflowError.from(this, array.length))
 
     return new Ok(this.bytes.set(array, this.offset))
+  }
+
+  /**
+   * Write an array to the bytes
+   * @param array array
+   */
+  writeOrThrow(array: Uint8Array): void {
+    this.setOrThrow(array)
+    this.offset += array.length
   }
 
   /**
