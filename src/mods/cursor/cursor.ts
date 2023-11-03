@@ -92,6 +92,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   getOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
+
     return this.bytes.subarray(this.offset, this.offset + length) as Uint8Array & { length: N }
   }
 
@@ -103,6 +104,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   tryGet<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
     if (this.remaining < length)
       return new Err(CursorReadLengthOverflowError.from(this, length))
+
     return new Ok(this.bytes.subarray(this.offset, this.offset + length) as Uint8Array & { length: N })
   }
 
@@ -133,6 +135,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   setOrThrow(array: Uint8Array): void {
     if (this.remaining < array.length)
       throw CursorWriteLengthOverflowError.from(this, array.length)
+
     this.bytes.set(array, this.offset)
   }
 
@@ -672,12 +675,40 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
   /**
    * Fill length bytes with value after offset
+   * @deprecated Use fillOrThrow instead
+   * @param value 
+   * @param length 
+   */
+  fill(value: number, length: number): void {
+    this.fillOrThrow(value, length)
+  }
+
+  /**
+   * Fill length bytes with value after offset
    * @param value value to fill
    * @param length length to fill
    */
-  fill(value: number, length: number): void {
+  fillOrThrow(value: number, length: number): void {
+    if (this.remaining < length)
+      throw CursorWriteLengthOverflowError.from(this, length)
+
     this.bytes.fill(value, this.offset, this.offset + length)
     this.offset += length
+  }
+
+  /**
+   * Fill length bytes with value after offset
+   * @param value value to fill
+   * @param length length to fill
+   */
+  tryFill(value: number, length: number): Result<void, CursorWriteLengthOverflowError> {
+    if (this.remaining < length)
+      return new Err(CursorWriteLengthOverflowError.from(this, length))
+
+    this.bytes.fill(value, this.offset, this.offset + length)
+    this.offset += length
+
+    return Ok.void()
   }
 
   *splitOrThrow(length: number): Generator<Uint8Array, void> {
