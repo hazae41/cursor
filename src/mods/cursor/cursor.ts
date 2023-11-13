@@ -89,10 +89,13 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
-  getOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
+  getOrThrow<N extends number>(length: N): Uint8Array & { readonly length: N } {
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
-    return this.bytes.subarray(this.offset, this.offset + length) as Uint8Array & { length: N }
+
+    const subarray = this.bytes.subarray(this.offset, this.offset + length)
+
+    return subarray as Uint8Array & { readonly length: N }
   }
 
   /**
@@ -100,22 +103,31 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
-  tryGet<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
+  tryGet<N extends number>(length: N): Result<Uint8Array & { readonly length: N }, CursorReadLengthOverflowError> {
     if (this.remaining < length)
       return new Err(CursorReadLengthOverflowError.from(this, length))
-    return new Ok(this.bytes.subarray(this.offset, this.offset + length) as Uint8Array & { length: N })
+
+    const subarray = this.bytes.subarray(this.offset, this.offset + length)
+
+    return new Ok(subarray as Uint8Array & { readonly length: N })
   }
 
-  getAndCopyOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
+  getAndCopyOrThrow<N extends number>(length: N): Uint8Array & { readonly length: N } {
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
-    return this.bytes.slice(this.offset, this.offset + length) as Uint8Array & { length: N }
+
+    const slice = this.bytes.slice(this.offset, this.offset + length)
+
+    return slice as Uint8Array & { readonly length: N }
   }
 
-  tryGetAndCopy<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
+  tryGetAndCopy<N extends number>(length: N): Result<Uint8Array & { readonly length: N }, CursorReadLengthOverflowError> {
     if (this.remaining < length)
       return new Err(CursorReadLengthOverflowError.from(this, length))
-    return new Ok(this.bytes.slice(this.offset, this.offset + length) as Uint8Array & { length: N })
+
+    const slice = this.bytes.slice(this.offset, this.offset + length)
+
+    return new Ok(slice as Uint8Array & { readonly length: N })
   }
 
   /**
@@ -123,7 +135,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
-  readOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
+  readOrThrow<N extends number>(length: N): Uint8Array & { readonly length: N } {
     const subarray = this.getOrThrow(length)
     this.offset += length
     return subarray
@@ -134,17 +146,17 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
-  tryRead<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
+  tryRead<N extends number>(length: N): Result<Uint8Array & { readonly length: N }, CursorReadLengthOverflowError> {
     return this.tryGet(length).inspectSync(() => this.offset += length)
   }
 
-  readAndCopyOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
+  readAndCopyOrThrow<N extends number>(length: N): Uint8Array & { readonly length: N } {
     const subarray = this.getAndCopyOrThrow(length)
     this.offset += length
     return subarray
   }
 
-  tryReadAndCopy<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
+  tryReadAndCopy<N extends number>(length: N): Result<Uint8Array & { readonly length: N }, CursorReadLengthOverflowError> {
     return this.tryGetAndCopy(length).inspectSync(() => this.offset += length)
   }
 
