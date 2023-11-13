@@ -92,7 +92,6 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   getOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
-
     return this.bytes.subarray(this.offset, this.offset + length) as Uint8Array & { length: N }
   }
 
@@ -104,8 +103,19 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   tryGet<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
     if (this.remaining < length)
       return new Err(CursorReadLengthOverflowError.from(this, length))
-
     return new Ok(this.bytes.subarray(this.offset, this.offset + length) as Uint8Array & { length: N })
+  }
+
+  getAndCopyOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
+    if (this.remaining < length)
+      throw CursorReadLengthOverflowError.from(this, length)
+    return this.bytes.slice(this.offset, this.offset + length) as Uint8Array & { length: N }
+  }
+
+  tryGetAndCopy<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
+    if (this.remaining < length)
+      return new Err(CursorReadLengthOverflowError.from(this, length))
+    return new Ok(this.bytes.slice(this.offset, this.offset + length) as Uint8Array & { length: N })
   }
 
   /**
@@ -126,6 +136,16 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    */
   tryRead<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
     return this.tryGet(length).inspectSync(() => this.offset += length)
+  }
+
+  readAndCopyOrThrow<N extends number>(length: N): Uint8Array & { length: N } {
+    const subarray = this.getAndCopyOrThrow(length)
+    this.offset += length
+    return subarray
+  }
+
+  tryReadAndCopy<N extends number>(length: N): Result<Uint8Array & { length: N }, CursorReadLengthOverflowError> {
+    return this.tryGetAndCopy(length).inspectSync(() => this.offset += length)
   }
 
   /**
