@@ -599,6 +599,10 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     return this.getOrThrow(this.getNullOrThrow())
   }
 
+  getNulledAndCopyOrThrow(): Uint8Array {
+    return this.getAndCopyOrThrow(this.getNullOrThrow())
+  }
+
   /**
    * Get a NULL-terminated subarray
    * @returns subarray of the bytes
@@ -607,8 +611,16 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     return this.tryGetNull().andThenSync(index => this.tryGet(index))
   }
 
+  tryGetNulledAndCopy(): Result<Uint8Array, CursorReadOverflowError> {
+    return this.tryGetNull().andThenSync(index => this.tryGetAndCopy(index))
+  }
+
   readNulledOrThrow(): Uint8Array {
     return this.readOrThrow(this.getNullOrThrow())
+  }
+
+  readNulledAndCopyOrThrow(): Uint8Array {
+    return this.readAndCopyOrThrow(this.getNullOrThrow())
   }
 
   /**
@@ -617,6 +629,10 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    */
   tryReadNulled(): Result<Uint8Array, CursorReadOverflowError> {
     return this.tryGetNull().andThenSync(index => this.tryRead(index))
+  }
+
+  tryReadNulledAndCopy(): Result<Uint8Array, CursorReadOverflowError> {
+    return this.tryGetNull().andThenSync(index => this.tryReadAndCopy(index))
   }
 
   setNulledOrThrow(array: Uint8Array): void {
