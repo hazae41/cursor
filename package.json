@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@hazae41/cursor",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Rust-like Cursor for TypeScript",
   "homepage": "https://github.com/hazae41/cursor",
   "repository": "github:hazae41/cursor",
