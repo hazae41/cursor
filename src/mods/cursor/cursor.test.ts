@@ -1,13 +1,10 @@
-import { assert, test } from "@hazae41/phobos";
-import { Result } from "@hazae41/result";
+import { assert, test, throws } from "@hazae41/phobos";
 import { Cursor } from "mods/cursor/cursor.js";
 import { relative, resolve } from "node:path";
 
 const directory = resolve("./dist/test/")
 const { pathname } = new URL(import.meta.url)
 console.log(relative(directory, pathname.replace(".mjs", ".ts")))
-
-Result.debug = true
 
 function equals(a: Uint8Array, b: Uint8Array) {
   return Buffer.from(a).equals(Buffer.from(b))
@@ -17,13 +14,13 @@ test("write then read", async () => {
   const bytes = new Uint8Array([1, 2, 3, 4])
   const cursor = new Cursor(new Uint8Array(bytes.length))
 
-  cursor.tryWrite(bytes).unwrap()
+  cursor.writeOrThrow(bytes)
   assert(cursor.offset === bytes.length)
   assert(equals(cursor.inner, bytes))
 
   cursor.offset = 0
 
-  const bytes2 = cursor.tryRead(bytes.length).unwrap()
+  const bytes2 = cursor.readOrThrow(bytes.length)
   assert(cursor.offset === bytes.length)
   assert(equals(cursor.inner, bytes2))
 
@@ -32,8 +29,8 @@ test("write then read", async () => {
 
   const overflowing = Buffer.from([1, 2, 3, 4, 5])
 
-  assert(cursor.tryWrite(overflowing).ignore().isErr())
-  assert(cursor.tryRead(overflowing.length).ignore().isErr())
+  assert(throws(() => cursor.writeOrThrow(overflowing)))
+  assert(throws(() => cursor.readOrThrow(overflowing.length)))
 })
 
 test("writeUint8 then readUint8", async () => {
@@ -41,14 +38,14 @@ test("writeUint8 then readUint8", async () => {
 
   const n = 42
 
-  cursor.tryWriteUint8(n).unwrap()
+  cursor.writeUint8OrThrow(n)
   assert(cursor.offset === 1)
   assert(cursor.inner.length === 1)
   assert(equals(cursor.inner, new Uint8Array([n])))
 
   cursor.offset = 0
 
-  const n2 = cursor.tryReadUint8().unwrap()
+  const n2 = cursor.readUint8OrThrow()
   assert(cursor.offset === 1)
   assert(cursor.inner.length === 1)
   assert(equals(cursor.inner, new Uint8Array([n])))
@@ -66,13 +63,13 @@ test("writeUint16 then readUint16", async () => {
 
   const n = 42
 
-  cursor.tryWriteUint16(n).unwrap()
+  cursor.writeUint16OrThrow(n)
   assert(cursor.offset === 2)
   assert(cursor.inner.length === 2)
 
   cursor.offset = 0
 
-  const n2 = cursor.tryReadUint16().unwrap()
+  const n2 = cursor.readUint16OrThrow()
   assert(cursor.offset === 2)
   assert(cursor.inner.length === 2)
 
@@ -89,13 +86,13 @@ test("writeUint24 then readUint24", async () => {
 
   const n = 42
 
-  cursor.tryWriteUint24(n).unwrap()
+  cursor.writeUint24OrThrow(n)
   assert(cursor.offset === 3)
   assert(cursor.inner.length === 3)
 
   cursor.offset = 0
 
-  const n2 = cursor.tryReadUint24().unwrap()
+  const n2 = cursor.readUint24OrThrow()
   assert(cursor.offset === 3)
   assert(cursor.inner.length === 3)
 
@@ -103,8 +100,8 @@ test("writeUint24 then readUint24", async () => {
 
   cursor.offset = 0
 
-  assert(cursor.tryWriteUint24(2 ** 24).ignore().isErr())
-  assert(cursor.tryWriteUint24(-1).ignore().isErr())
+  assert(throws(() => cursor.writeUint24OrThrow(2 ** 24)))
+  assert(throws(() => cursor.writeUint24OrThrow(-1)))
 })
 
 test("writeUint32 then readUint32", async () => {
@@ -112,13 +109,13 @@ test("writeUint32 then readUint32", async () => {
 
   const n = 42
 
-  cursor.tryWriteUint32(n).unwrap()
+  cursor.writeUint32OrThrow(n)
   assert(cursor.offset === 4)
   assert(cursor.inner.length === 4)
 
   cursor.offset = 0
 
-  const n2 = cursor.tryReadUint32().unwrap()
+  const n2 = cursor.readUint32OrThrow()
   assert(cursor.offset === 4)
   assert(cursor.inner.length === 4)
 
@@ -134,7 +131,7 @@ test("fill", async ({ test }) => {
   const cursor = new Cursor(new Uint8Array(5))
 
   cursor.offset += 2
-  cursor.fill(1, 2)
+  cursor.fillOrThrow(1, 2)
 
   const expected = new Uint8Array([0, 0, 1, 1, 0])
   assert(equals(cursor.inner, expected))
@@ -143,7 +140,7 @@ test("fill", async ({ test }) => {
 test("split", async ({ test }) => {
   const cursor = new Cursor(crypto.getRandomValues(new Uint8Array(256)))
 
-  const splitter = cursor.trySplit(100)
+  const splitter = cursor.splitOrThrow(100)
   const chunks = new Array<Uint8Array>()
 
   let result = splitter.next()
@@ -151,7 +148,7 @@ test("split", async ({ test }) => {
   for (; !result.done; result = splitter.next())
     chunks.push(result.value)
 
-  result.value.unwrap()
+  result.value
 
   assert(chunks[0].length === 100)
   assert(chunks[1].length === 100)
