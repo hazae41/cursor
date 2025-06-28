@@ -16,13 +16,13 @@ test("write then read", async () => {
 
   cursor.writeOrThrow(bytes)
   assert(cursor.offset === bytes.length)
-  assert(equals(cursor.inner, bytes))
+  assert(equals(cursor.buffer, bytes))
 
   cursor.offset = 0
 
   const bytes2 = cursor.readOrThrow(bytes.length)
   assert(cursor.offset === bytes.length)
-  assert(equals(cursor.inner, bytes2))
+  assert(equals(cursor.buffer, bytes2))
 
   assert(bytes.length === bytes2.length)
   assert(equals(bytes, bytes2))
@@ -40,15 +40,15 @@ test("writeUint8 then readUint8", async () => {
 
   cursor.writeUint8OrThrow(n)
   assert(cursor.offset === 1)
-  assert(cursor.inner.length === 1)
-  assert(equals(cursor.inner, new Uint8Array([n])))
+  assert(cursor.buffer.length === 1)
+  assert(equals(cursor.buffer, new Uint8Array([n])))
 
   cursor.offset = 0
 
   const n2 = cursor.readUint8OrThrow()
   assert(cursor.offset === 1)
-  assert(cursor.inner.length === 1)
-  assert(equals(cursor.inner, new Uint8Array([n])))
+  assert(cursor.buffer.length === 1)
+  assert(equals(cursor.buffer, new Uint8Array([n])))
 
   assert(n === n2)
 
@@ -65,13 +65,13 @@ test("writeUint16 then readUint16", async () => {
 
   cursor.writeUint16OrThrow(n)
   assert(cursor.offset === 2)
-  assert(cursor.inner.length === 2)
+  assert(cursor.buffer.length === 2)
 
   cursor.offset = 0
 
   const n2 = cursor.readUint16OrThrow()
   assert(cursor.offset === 2)
-  assert(cursor.inner.length === 2)
+  assert(cursor.buffer.length === 2)
 
   assert(n === n2)
 
@@ -88,13 +88,13 @@ test("writeUint24 then readUint24", async () => {
 
   cursor.writeUint24OrThrow(n)
   assert(cursor.offset === 3)
-  assert(cursor.inner.length === 3)
+  assert(cursor.buffer.length === 3)
 
   cursor.offset = 0
 
   const n2 = cursor.readUint24OrThrow()
   assert(cursor.offset === 3)
-  assert(cursor.inner.length === 3)
+  assert(cursor.buffer.length === 3)
 
   assert(n === n2)
 
@@ -111,13 +111,13 @@ test("writeUint32 then readUint32", async () => {
 
   cursor.writeUint32OrThrow(n)
   assert(cursor.offset === 4)
-  assert(cursor.inner.length === 4)
+  assert(cursor.buffer.length === 4)
 
   cursor.offset = 0
 
   const n2 = cursor.readUint32OrThrow()
   assert(cursor.offset === 4)
-  assert(cursor.inner.length === 4)
+  assert(cursor.buffer.length === 4)
 
   assert(n === n2)
 
@@ -134,7 +134,7 @@ test("fill", async ({ test }) => {
   cursor.fillOrThrow(1, 2)
 
   const expected = new Uint8Array([0, 0, 1, 1, 0])
-  assert(equals(cursor.inner, expected))
+  assert(equals(cursor.buffer, expected))
 })
 
 test("split", async ({ test }) => {

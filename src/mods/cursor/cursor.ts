@@ -1,16 +1,17 @@
 import { Buffers } from "libs/buffers/buffers.js"
-import { Uint8Arrays } from "libs/bytes/bytes.js"
+import { Uint8Array } from "libs/bytes/bytes.js"
+import { Uncopied } from "libs/copiable/index.js"
 import { DataViews } from "libs/dataviews/dataviews.js"
 import { Utf8 } from "libs/utf8/utf8.js"
 import { CursorReadLengthOverflowError, CursorReadNullOverflowError, CursorWriteLengthOverflowError, CursorWriteUnknownError } from "./errors.js"
 
-export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
+export class Cursor<T extends Uint8Array = Uint8Array> {
 
-  #inner: T
+  readonly buffer: T
 
-  #bytes?: Uint8Array
-  #data?: DataView
-  #buffer?: Buffer
+  readonly #asDataView: DataView
+
+  readonly #asNodeBuffer: Buffer
 
   offset: number
 
@@ -19,44 +20,24 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param inner 
    * @param offset 
    */
-  constructor(inner: T, offset = 0) {
-    this.#inner = inner
+  constructor(buffer: T, offset = 0) {
+    this.buffer = buffer
     this.offset = offset
+
+    this.#asDataView = DataViews.fromView(this.buffer)
+
+    this.#asNodeBuffer = Buffers.fromView(this.buffer)
   }
 
-  static create<T extends ArrayBufferView>(inner: T, offset?: number) {
-    return new Cursor(inner, offset)
-  }
-
-  get inner() {
-    return this.#inner
-  }
-
-  set inner(inner: T) {
-    this.#inner = inner
-
-    this.#bytes = undefined
-    this.#data = undefined
-    this.#buffer = undefined
-  }
-
-  get bytes() {
-    return this.#bytes ??= Uint8Arrays.fromView(this.inner)
-  }
-
-  get data() {
-    return this.#data ??= DataViews.fromView(this.inner)
-  }
-
-  get buffer() {
-    return this.#buffer ??= Buffers.fromView(this.inner)
+  static create<T extends Uint8Array>(buffer: T, offset?: number) {
+    return new Cursor(buffer, offset)
   }
 
   /**
    * @returns total number of bytes
    */
   get length() {
-    return this.bytes.length
+    return this.buffer.length
   }
 
   /**
@@ -71,7 +52,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @returns subarray of the bytes before the current offset
    */
   get before(): Uint8Array {
-    return this.bytes.subarray(0, this.offset)
+    return this.buffer.subarray(0, this.offset)
   }
 
   /**
@@ -79,7 +60,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @returns subarray of the bytes after the current offset
    */
   get after(): Uint8Array {
-    return this.bytes.subarray(this.offset)
+    return this.buffer.subarray(this.offset)
   }
 
   /**
@@ -87,22 +68,13 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
-  getOrThrow<N extends number>(length: N): Uint8Array & { readonly length: N } {
+  getOrThrow<N extends number>(length: N): Uncopied<N> {
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
 
-    const subarray = this.bytes.subarray(this.offset, this.offset + length)
+    const subarray = this.buffer.subarray(this.offset, this.offset + length)
 
-    return subarray as Uint8Array & { readonly length: N }
-  }
-
-  getAndCopyOrThrow<N extends number>(length: N): Uint8Array & { readonly length: N } {
-    if (this.remaining < length)
-      throw CursorReadLengthOverflowError.from(this, length)
-
-    const slice = this.bytes.slice(this.offset, this.offset + length)
-
-    return slice as Uint8Array & { readonly length: N }
+    return new Uncopied(subarray as Uint8Array<N>)
   }
 
   /**
@@ -110,14 +82,8 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
    * @param length 
    * @returns subarray of the bytes
    */
-  readOrThrow<N extends number>(length: N): Uint8Array & { readonly length: N } {
+  readOrThrow<N extends number>(length: N): Uncopied<N> {
     const subarray = this.getOrThrow(length)
-    this.offset += length
-    return subarray
-  }
-
-  readAndCopyOrThrow<N extends number>(length: N): Uint8Array & { readonly length: N } {
-    const subarray = this.getAndCopyOrThrow(length)
     this.offset += length
     return subarray
   }
@@ -130,7 +96,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     if (this.remaining < array.length)
       throw CursorWriteLengthOverflowError.from(this, array.length)
 
-    this.bytes.set(array, this.offset)
+    this.buffer.set(array, this.offset)
   }
 
   /**
@@ -143,7 +109,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   getUint8OrThrow(): number {
-    return this.bytes[this.offset]
+    return this.buffer[this.offset]
   }
 
   readUint8OrThrow(): number {
@@ -153,7 +119,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   setUint8OrThrow(x: number): void {
-    this.bytes[this.offset] = x
+    this.buffer[this.offset] = x
   }
 
   writeUint8OrThrow(x: number): void {
@@ -162,7 +128,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   getUint16OrThrow(littleEndian?: boolean): number {
-    return this.data.getUint16(this.offset, littleEndian)
+    return this.#asDataView.getUint16(this.offset, littleEndian)
   }
 
   readUint16OrThrow(littleEndian?: boolean): number {
@@ -172,7 +138,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   setUint16OrThrow(x: number, littleEndian?: boolean): void {
-    this.data.setUint16(this.offset, x, littleEndian)
+    this.#asDataView.setUint16(this.offset, x, littleEndian)
   }
 
   writeUint16OrThrow(x: number, littleEndian?: boolean): void {
@@ -182,9 +148,9 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
   getUint24OrThrow(littleEndian?: boolean): number {
     if (littleEndian)
-      return this.buffer.readUIntLE(this.offset, 3)
+      return this.#asNodeBuffer.readUIntLE(this.offset, 3)
     else
-      return this.buffer.readUIntBE(this.offset, 3)
+      return this.#asNodeBuffer.readUIntBE(this.offset, 3)
   }
 
   readUint24OrThrow(littleEndian?: boolean): number {
@@ -195,9 +161,9 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
 
   setUint24OrThrow(x: number, littleEndian?: boolean): void {
     if (littleEndian)
-      this.buffer.writeUIntLE(x, this.offset, 3)
+      this.#asNodeBuffer.writeUIntLE(x, this.offset, 3)
     else
-      this.buffer.writeUIntBE(x, this.offset, 3)
+      this.#asNodeBuffer.writeUIntBE(x, this.offset, 3)
   }
 
   writeUint24OrThrow(x: number, littleEndian?: boolean): void {
@@ -206,7 +172,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   getUint32OrThrow(littleEndian?: boolean): number {
-    return this.data.getUint32(this.offset, littleEndian)
+    return this.#asDataView.getUint32(this.offset, littleEndian)
   }
 
   readUint32OrThrow(littleEndian?: boolean): number {
@@ -216,7 +182,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   setUint32OrThrow(x: number, littleEndian?: boolean): void {
-    this.data.setUint32(this.offset, x, littleEndian)
+    this.#asDataView.setUint32(this.offset, x, littleEndian)
   }
 
   writeUint32OrThrow(x: number, littleEndian?: boolean): void {
@@ -225,7 +191,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   getUint64OrThrow(littleEndian?: boolean): bigint {
-    return this.data.getBigUint64(this.offset, littleEndian)
+    return this.#asDataView.getBigUint64(this.offset, littleEndian)
   }
 
   readUint64OrThrow(littleEndian?: boolean): bigint {
@@ -235,7 +201,7 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   setUint64OrThrow(x: bigint, littleEndian?: boolean): void {
-    this.data.setBigUint64(this.offset, x, littleEndian)
+    this.#asDataView.setBigUint64(this.offset, x, littleEndian)
   }
 
   writeUint64OrThrow(x: bigint, littleEndian?: boolean): void {
@@ -244,11 +210,11 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   getUtf8OrThrow(length: number): string {
-    return Utf8.decoder.decode(this.getOrThrow(length))
+    return Utf8.decoder.decode(this.getOrThrow(length).get())
   }
 
   readUtf8OrThrow(length: number): string {
-    return Utf8.decoder.decode(this.readOrThrow(length))
+    return Utf8.decoder.decode(this.readOrThrow(length).get())
   }
 
   setUtf8OrThrow(text: string): void {
@@ -271,29 +237,21 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   getNullOrThrow(): number {
     let i = this.offset
 
-    while (i < this.bytes.length && this.bytes[i] > 0)
+    while (i < this.buffer.length && this.buffer[i] > 0)
       i++
 
-    if (i === this.bytes.length)
+    if (i === this.buffer.length)
       throw CursorReadNullOverflowError.from(this)
 
     return i
   }
 
-  getNulledOrThrow(): Uint8Array {
+  getNulledOrThrow(): Uncopied {
     return this.getOrThrow(this.getNullOrThrow())
   }
 
-  getNulledAndCopyOrThrow(): Uint8Array {
-    return this.getAndCopyOrThrow(this.getNullOrThrow())
-  }
-
-  readNulledOrThrow(): Uint8Array {
+  readNulledOrThrow(): Uncopied {
     return this.readOrThrow(this.getNullOrThrow())
-  }
-
-  readNulledAndCopyOrThrow(): Uint8Array {
-    return this.readAndCopyOrThrow(this.getNullOrThrow())
   }
 
   setNulledOrThrow(array: Uint8Array): void {
@@ -312,11 +270,11 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
   }
 
   getNulledStringOrThrow(encoding?: BufferEncoding): string {
-    return Buffers.fromView(this.getNulledOrThrow()).toString(encoding)
+    return Buffers.fromView(this.getNulledOrThrow().get()).toString(encoding)
   }
 
   readNulledStringOrThrow(encoding?: BufferEncoding): string {
-    return Buffers.fromView(this.readNulledOrThrow()).toString(encoding)
+    return Buffers.fromView(this.readNulledOrThrow().get()).toString(encoding)
   }
 
   setNulledStringOrThrow(text: string, encoding?: BufferEncoding): void {
@@ -336,11 +294,11 @@ export class Cursor<T extends ArrayBufferView = ArrayBufferView> {
     if (this.remaining < length)
       throw CursorWriteLengthOverflowError.from(this, length)
 
-    this.bytes.fill(value, this.offset, this.offset + length)
+    this.buffer.fill(value, this.offset, this.offset + length)
     this.offset += length
   }
 
-  *splitOrThrow(length: number): Generator<Uint8Array, void> {
+  *splitOrThrow(length: number): Generator<Uncopied, void> {
     while (this.remaining >= length)
       yield this.readOrThrow(length)
 
