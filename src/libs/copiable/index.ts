@@ -9,6 +9,7 @@ export interface Copiable<N extends number = number> {
 }
 
 export class Copied<N extends number = number> implements Copiable<N> {
+  readonly #class = Copied
 
   private constructor(
     readonly bytes: Uint8Array<N>,
