@@ -1,4 +1,4 @@
-import { Cursor } from "./cursor.js"
+import { Cursor } from "../index.js"
 
 export type CursorError =
   | CursorReadError
