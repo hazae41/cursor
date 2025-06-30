@@ -18,8 +18,7 @@
   ],
   "scripts": {
     "build": "rimraf dist && rollup -c",
-    "test": "node ./dist/test/index.test.mjs",
-    "prepare": "npm run build"
+    "test": "node ./dist/test/index.test.mjs"
   },
   "devDependencies": {
     "@hazae41/phobos": "^1.0.10",
@@ -66,6 +65,6 @@
     "unit-tested"
   ],
   "dependencies": {
-    "@hazae41/uncopy": "^1.0.3"
+    "@hazae41/uncopy": "^1.0.4"
   }
 }
