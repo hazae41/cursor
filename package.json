@@ -65,6 +65,7 @@
     "unit-tested"
   ],
   "dependencies": {
-    "@hazae41/clonable": "^1.0.6"
+    "@hazae41/clonable": "^1.0.6",
+    "@hazae41/lengthed": "^1.0.1"
   }
 }

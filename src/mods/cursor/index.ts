@@ -1,8 +1,9 @@
 export * from "./errors/index.js"
 
 import { Slice } from "@hazae41/clonable"
+import { Lengthed } from "@hazae41/lengthed"
 import { Buffers } from "libs/buffers/buffers.js"
-import { Bytes, Uint8Array } from "libs/bytes/index.js"
+import { Bytes } from "libs/bytes/index.js"
 import { Data } from "libs/dataviews/dataviews.js"
 import { Utf8 } from "libs/utf8/utf8.js"
 import { CursorReadLengthOverflowError, CursorReadNullOverflowError, CursorWriteLengthOverflowError, CursorWriteUnknownError } from "./errors/index.js"
@@ -82,7 +83,7 @@ export class Cursor {
 
     const subarray = this.#bytes.subarray(this.offset, this.offset + length)
 
-    return new Slice(subarray as Uint8Array<N>)
+    return new Slice(subarray as Uint8Array & Lengthed<N>)
   }
 
   /**

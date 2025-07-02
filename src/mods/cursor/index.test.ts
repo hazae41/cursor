@@ -20,7 +20,7 @@ test("write then read", async () => {
 
   cursor.offset = 0
 
-  const bytes2 = cursor.readOrThrow(bytes.length).get()
+  const bytes2 = cursor.readOrThrow(bytes.length).bytes
   assert(cursor.offset === bytes.length)
   assert(equals(cursor.bytes, bytes2))
 
@@ -146,7 +146,7 @@ test("split", async ({ test }) => {
   let result = splitter.next()
 
   for (; !result.done; result = splitter.next())
-    chunks.push(result.value.get())
+    chunks.push(result.value.bytes)
 
   result.value
 
