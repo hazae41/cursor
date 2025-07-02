@@ -1,6 +1,6 @@
 export * from "./errors/index.js"
 
-import { Uncopied } from "@hazae41/uncopy"
+import { Slice } from "@hazae41/uncopy"
 import { Buffers } from "libs/buffers/buffers.js"
 import { Bytes, Uint8Array } from "libs/bytes/index.js"
 import { Data } from "libs/dataviews/dataviews.js"
@@ -76,13 +76,13 @@ export class Cursor {
    * @param length 
    * @returns subarray of the bytes
    */
-  getOrThrow<N extends number>(length: N): Uncopied<N> {
+  getOrThrow<N extends number>(length: N): Slice<N> {
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
 
     const subarray = this.#bytes.subarray(this.offset, this.offset + length)
 
-    return new Uncopied(subarray as Uint8Array<N>)
+    return new Slice(subarray as Uint8Array<N>)
   }
 
   /**
@@ -90,7 +90,7 @@ export class Cursor {
    * @param length 
    * @returns subarray of the bytes
    */
-  readOrThrow<N extends number>(length: N): Uncopied<N> {
+  readOrThrow<N extends number>(length: N): Slice<N> {
     const subarray = this.getOrThrow(length)
     this.offset += length
     return subarray
@@ -218,11 +218,11 @@ export class Cursor {
   }
 
   getUtf8OrThrow(length: number): string {
-    return Utf8.decoder.decode(this.getOrThrow(length).get())
+    return Utf8.decoder.decode(this.getOrThrow(length).bytes)
   }
 
   readUtf8OrThrow(length: number): string {
-    return Utf8.decoder.decode(this.readOrThrow(length).get())
+    return Utf8.decoder.decode(this.readOrThrow(length).bytes)
   }
 
   setUtf8OrThrow(text: string): void {
@@ -254,11 +254,11 @@ export class Cursor {
     return i
   }
 
-  getNulledOrThrow(): Uncopied {
+  getNulledOrThrow(): Slice {
     return this.getOrThrow(this.getNullOrThrow())
   }
 
-  readNulledOrThrow(): Uncopied {
+  readNulledOrThrow(): Slice {
     return this.readOrThrow(this.getNullOrThrow())
   }
 
@@ -278,11 +278,11 @@ export class Cursor {
   }
 
   getNulledStringOrThrow(encoding?: BufferEncoding): string {
-    return Buffers.fromView(this.getNulledOrThrow().get()).toString(encoding)
+    return Buffers.fromView(this.getNulledOrThrow().bytes).toString(encoding)
   }
 
   readNulledStringOrThrow(encoding?: BufferEncoding): string {
-    return Buffers.fromView(this.readNulledOrThrow().get()).toString(encoding)
+    return Buffers.fromView(this.readNulledOrThrow().bytes).toString(encoding)
   }
 
   setNulledStringOrThrow(text: string, encoding?: BufferEncoding): void {
@@ -306,7 +306,7 @@ export class Cursor {
     this.offset += length
   }
 
-  *splitOrThrow(length: number): Generator<Uncopied, void> {
+  *splitOrThrow(length: number): Generator<Slice, void> {
     while (this.remaining >= length)
       yield this.readOrThrow(length)
 
