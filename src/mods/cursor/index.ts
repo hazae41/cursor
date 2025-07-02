@@ -1,6 +1,6 @@
 export * from "./errors/index.js"
 
-import { Slice } from "@hazae41/uncopy"
+import { Slice } from "@hazae41/clonable"
 import { Buffers } from "libs/buffers/buffers.js"
 import { Bytes, Uint8Array } from "libs/bytes/index.js"
 import { Data } from "libs/dataviews/dataviews.js"
