@@ -7,13 +7,13 @@ import { Data } from "libs/dataviews/dataviews.js"
 import { Utf8 } from "libs/utf8/utf8.js"
 import { CursorReadLengthOverflowError, CursorReadNullOverflowError, CursorWriteLengthOverflowError, CursorWriteUnknownError } from "./errors/index.js"
 
-export class Cursor {
+export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
 
-  readonly #data: DataView
+  readonly #data: DataView<T>
 
-  readonly #bytes: Uint8Array
+  readonly #bytes: Uint8Array<T>
 
-  readonly #buffer: Buffer
+  readonly #buffer: Buffer<T>
 
   offset: number
 
@@ -22,7 +22,7 @@ export class Cursor {
    * @param inner 
    * @param offset 
    */
-  constructor(buffer: ArrayBufferView, offset = 0) {
+  constructor(buffer: ArrayBufferView<T>, offset = 0) {
     this.offset = offset
 
     this.#data = Data.fromView(buffer)
@@ -76,13 +76,13 @@ export class Cursor {
    * @param length 
    * @returns subarray of the bytes
    */
-  getOrThrow<N extends number>(length: N): Uint8Array & Lengthed<N> {
+  getOrThrow<N extends number>(length: N): Uint8Array<T> & Lengthed<N> {
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
 
     const subarray = this.#bytes.subarray(this.offset, this.offset + length)
 
-    return subarray as Uint8Array & Lengthed<N>
+    return subarray as Uint8Array<T> & Lengthed<N>
   }
 
   /**
@@ -90,7 +90,7 @@ export class Cursor {
    * @param length 
    * @returns subarray of the bytes
    */
-  readOrThrow<N extends number>(length: N): Uint8Array & Lengthed<N> {
+  readOrThrow<N extends number>(length: N): Uint8Array<T> & Lengthed<N> {
     const subarray = this.getOrThrow(length)
     this.offset += length
     return subarray
@@ -254,11 +254,11 @@ export class Cursor {
     return i
   }
 
-  getNulledOrThrow(): Uint8Array {
+  getNulledOrThrow(): Uint8Array<T> {
     return this.getOrThrow(this.getNullOrThrow())
   }
 
-  readNulledOrThrow(): Uint8Array {
+  readNulledOrThrow(): Uint8Array<T> {
     return this.readOrThrow(this.getNullOrThrow())
   }
 
@@ -306,7 +306,7 @@ export class Cursor {
     this.offset += length
   }
 
-  *splitOrThrow(length: number): Generator<Uint8Array, void> {
+  *splitOrThrow(length: number): Generator<Uint8Array<T>, void> {
     while (this.remaining >= length)
       yield this.readOrThrow(length)
 
