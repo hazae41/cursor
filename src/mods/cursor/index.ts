@@ -4,7 +4,6 @@ import { Lengthed } from "@hazae41/lengthed"
 import { Buffers } from "libs/buffers/buffers.js"
 import { Bytes } from "libs/bytes/index.js"
 import { Data } from "libs/dataviews/dataviews.js"
-import { Utf8 } from "libs/utf8/utf8.js"
 import { CursorReadLengthOverflowError, CursorReadNullOverflowError, CursorWriteLengthOverflowError, CursorWriteUnknownError } from "./errors/index.js"
 
 export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
@@ -218,15 +217,15 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
   }
 
   getUtf8OrThrow(length: number): string {
-    return Utf8.decoder.decode(this.getOrThrow(length))
+    return new TextDecoder().decode(this.getOrThrow(length))
   }
 
   readUtf8OrThrow(length: number): string {
-    return Utf8.decoder.decode(this.readOrThrow(length))
+    return new TextDecoder().decode(this.readOrThrow(length))
   }
 
   setUtf8OrThrow(text: string): void {
-    const result = Utf8.encoder.encodeInto(text, this.after)
+    const result = new TextEncoder().encodeInto(text, this.after)
 
     if (result.read! !== text.length)
       throw new CursorWriteUnknownError()
@@ -234,7 +233,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
   }
 
   writeUtf8OrThrow(text: string): void {
-    const result = Utf8.encoder.encodeInto(text, this.after)
+    const result = new TextEncoder().encodeInto(text, this.after)
 
     if (result.read! !== text.length)
       throw new CursorWriteUnknownError()
