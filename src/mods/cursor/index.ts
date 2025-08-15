@@ -21,16 +21,16 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
    * @param inner 
    * @param offset 
    */
-  constructor(buffer: ArrayBufferView<T>, offset = 0) {
+  constructor(view: Uint8Array<T>, offset = 0) {
     this.offset = offset
 
-    this.#data = Data.fromView(buffer)
-    this.#bytes = Bytes.fromView(buffer)
-    this.#buffer = Buffers.fromView(buffer)
+    this.#data = Data.fromView(view)
+    this.#bytes = Bytes.fromView(view)
+    this.#buffer = Buffers.fromView(view)
   }
 
-  static create<T extends Uint8Array>(buffer: T, offset?: number) {
-    return new Cursor(buffer, offset)
+  static create<T extends ArrayBufferLike>(view: Uint8Array<T>, offset?: number) {
+    return new Cursor(view, offset)
   }
 
   /**
@@ -58,7 +58,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
    * Get a subarray of the bytes before the current offset
    * @returns subarray of the bytes before the current offset
    */
-  get before(): Uint8Array {
+  get before(): Uint8Array<T> {
     return this.#bytes.subarray(0, this.offset)
   }
 
@@ -66,7 +66,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
    * Get a subarray of the bytes after the current offset
    * @returns subarray of the bytes after the current offset
    */
-  get after(): Uint8Array {
+  get after(): Uint8Array<T> {
     return this.#bytes.subarray(this.offset)
   }
 
