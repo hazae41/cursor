@@ -1,5 +1,7 @@
 # Cursor
 
+Rust-like Cursor for TypeScript
+
 ```bash
 npm install @hazae41/cursor
 ```
