@@ -1,10 +1,14 @@
 # Cursor
 
 ```bash
-npm i @hazae41/cursor
+npm install @hazae41/cursor
 ```
 
-[**Node Package 📦**](https://www.npmjs.com/package/@hazae41/cursor)
+```bash
+deno install jsr:@hazae41/cursor
+```
+
+[**📦 NPM**](https://www.npmjs.com/package/@hazae41/cursor) • [**📦 JSR**](https://jsr.io/@hazae41/cursor)
 
 ## Features
 
