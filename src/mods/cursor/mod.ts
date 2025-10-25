@@ -1,18 +1,91 @@
-export * from "./errors/index.js"
+import { Bytes } from "@/libs/bytes/mod.ts"
+import { Data } from "@/libs/dataviews/mod.ts"
+import type { Lengthed } from "@/libs/lengthed/mod.ts"
 
-import { Lengthed } from "@hazae41/lengthed"
-import { Buffers } from "libs/buffers/buffers.js"
-import { Bytes } from "libs/bytes/index.js"
-import { Data } from "libs/dataviews/dataviews.js"
-import { CursorReadLengthOverflowError, CursorReadNullOverflowError, CursorWriteLengthOverflowError, CursorWriteUnknownError } from "./errors/index.js"
+export type CursorError =
+  | CursorReadError
+  | CursorWriteError
+
+export type CursorReadError =
+  | CursorReadOverflowError
+  | CursorReadUnknownError
+
+export type CursorReadOverflowError =
+  | CursorReadLengthOverflowError
+  | CursorReadNullOverflowError
+
+export type CursorWriteError =
+  | CursorWriteLengthOverflowError
+  | CursorWriteUnknownError
+
+export class CursorReadLengthOverflowError extends Error {
+  readonly #class = CursorReadLengthOverflowError
+  readonly name: string = this.#class.name
+
+  constructor(
+    readonly cursorOffset: number,
+    readonly cursorLength: number,
+    readonly bytesLength: number
+  ) {
+    super(`Overflow reading ${bytesLength} bytes at offset ${cursorOffset}/${cursorLength}`)
+  }
+
+  static from(cursor: Cursor, bytesLength: number): CursorReadLengthOverflowError {
+    return new CursorReadLengthOverflowError(cursor.offset, cursor.length, bytesLength)
+  }
+
+}
+
+export class CursorWriteLengthOverflowError extends Error {
+  readonly #class = CursorWriteLengthOverflowError
+  readonly name: string = this.#class.name
+
+  constructor(
+    readonly cursorOffset: number,
+    readonly cursorLength: number,
+    readonly bytesLength: number
+  ) {
+    super(`Overflow writing ${bytesLength} bytes at offset ${cursorOffset}/${cursorLength}`)
+  }
+
+  static from(cursor: Cursor, bytesLength: number): CursorWriteLengthOverflowError {
+    return new CursorWriteLengthOverflowError(cursor.offset, cursor.length, bytesLength)
+  }
+
+}
+
+export class CursorReadNullOverflowError extends Error {
+  readonly #class = CursorReadNullOverflowError
+  readonly name: string = this.#class.name
+
+  constructor(
+    readonly cursorOffset: number,
+    readonly cursorLength: number
+  ) {
+    super(`Overflow reading null byte at offset ${cursorOffset}/${cursorLength}`)
+  }
+
+  static from(cursor: Cursor): CursorReadNullOverflowError {
+    return new CursorReadNullOverflowError(cursor.offset, cursor.length)
+  }
+
+}
+
+export class CursorReadUnknownError extends Error {
+  readonly #class = CursorReadUnknownError
+  readonly name: string = this.#class.name
+}
+
+export class CursorWriteUnknownError extends Error {
+  readonly #class = CursorWriteUnknownError
+  readonly name: string = this.#class.name
+}
 
 export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
 
   readonly #data: DataView<T>
 
   readonly #bytes: Uint8Array<T>
-
-  readonly #buffer: Buffer<T>
 
   offset: number
 
@@ -26,31 +99,26 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
 
     this.#data = Data.fromView(view)
     this.#bytes = Bytes.fromView(view)
-    this.#buffer = Buffers.fromView(view)
-  }
-
-  static create<T extends ArrayBufferLike>(view: Uint8Array<T>, offset?: number) {
-    return new Cursor(view, offset)
   }
 
   /**
    * get bytes
    */
-  get bytes() {
+  get bytes(): Uint8Array<T> {
     return this.#bytes
   }
 
   /**
    * @returns total number of bytes
    */
-  get length() {
+  get length(): number {
     return this.#bytes.length
   }
 
   /**
    * @returns number of remaining bytes
    */
-  get remaining() {
+  get remaining(): number {
     return this.length - this.offset
   }
 
@@ -154,10 +222,11 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
   }
 
   getUint24OrThrow(littleEndian?: boolean): number {
-    if (littleEndian)
-      return this.#buffer.readUIntLE(this.offset, 3)
-    else
-      return this.#buffer.readUIntBE(this.offset, 3)
+    if (littleEndian) {
+      return (this.#bytes[this.offset]) | (this.#bytes[this.offset + 1] << 8) | (this.#bytes[this.offset + 2] << 16)
+    } else {
+      return (this.#bytes[this.offset] << 16) | (this.#bytes[this.offset + 1] << 8) | (this.#bytes[this.offset + 2])
+    }
   }
 
   readUint24OrThrow(littleEndian?: boolean): number {
@@ -167,10 +236,15 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
   }
 
   setUint24OrThrow(x: number, littleEndian?: boolean): void {
-    if (littleEndian)
-      this.#buffer.writeUIntLE(x, this.offset, 3)
-    else
-      this.#buffer.writeUIntBE(x, this.offset, 3)
+    if (littleEndian) {
+      this.#bytes[this.offset] = x & 0xFF
+      this.#bytes[this.offset + 1] = (x >> 8) & 0xFF
+      this.#bytes[this.offset + 2] = (x >> 16) & 0xFF
+    } else {
+      this.#bytes[this.offset] = (x >> 16) & 0xFF
+      this.#bytes[this.offset + 1] = (x >> 8) & 0xFF
+      this.#bytes[this.offset + 2] = x & 0xFF
+    }
   }
 
   writeUint24OrThrow(x: number, littleEndian?: boolean): void {
@@ -274,22 +348,6 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
   writeNulledOrThrow(array: Uint8Array): void {
     this.writeOrThrow(array)
     this.writeUint8OrThrow(0)
-  }
-
-  getNulledStringOrThrow(encoding?: BufferEncoding): string {
-    return Buffers.fromView(this.getNulledOrThrow()).toString(encoding)
-  }
-
-  readNulledStringOrThrow(encoding?: BufferEncoding): string {
-    return Buffers.fromView(this.readNulledOrThrow()).toString(encoding)
-  }
-
-  setNulledStringOrThrow(text: string, encoding?: BufferEncoding): void {
-    this.setNulledOrThrow(Buffer.from(text, encoding))
-  }
-
-  writeNulledStringOrThrow(text: string, encoding?: BufferEncoding): void {
-    this.writeNulledOrThrow(Buffer.from(text, encoding))
   }
 
   /**
