@@ -28,10 +28,10 @@ deno install jsr:@hazae41/cursor
 #### Writing
 
 ```typescript
-const cursor = Cursor.allocUnsafe(1024)
+const cursor = new Cursor(new Uint8Array(1024))
 
-cursor.tryWriteUint8(123).unwrap()
-cursor.tryWriteUint16(1234).unwrap()
+cursor.writeUint8OrThrow(123)
+cursor.writeUint16OrThrow(1234)
 
 console.log(cursor.offset) // 3
 ```
@@ -39,11 +39,10 @@ console.log(cursor.offset) // 3
 #### Reading
 
 ```typescript
-const bytes = new Uint8Array(/*...*/)
-const cursor = new Cursor(bytes)
+const cursor = new Cursor(new Uint8Array(/*...*/))
 
-const uint8 = cursor.tryReadUint8().unwrap()
-const uint16 = cursor.tryReadUint16().unwrap()
+const uint8 = cursor.readUint8OrThrow()
+const uint16 = cursor.readUint16OrThrow()
 
 console.log(cursor.offset) // 3
 ```
