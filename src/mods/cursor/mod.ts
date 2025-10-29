@@ -1,4 +1,3 @@
-import { Bytes } from "@/libs/bytes/mod.ts"
 import { Data } from "@/libs/dataviews/mod.ts"
 import type { Lengthed } from "@/libs/lengthed/mod.ts"
 
@@ -81,11 +80,11 @@ export class CursorWriteUnknownError extends Error {
   readonly name: string = this.#class.name
 }
 
-export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
+export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends number = number> {
 
   readonly #data: DataView<T>
 
-  readonly #bytes: Uint8Array<T>
+  readonly #bytes: Uint8Array<T> & Lengthed<N>
 
   offset: number
 
@@ -94,24 +93,25 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
    * @param inner 
    * @param offset 
    */
-  constructor(view: Uint8Array<T>, offset = 0) {
+  constructor(bytes: Uint8Array<T> & Lengthed<N>, offset = 0) {
     this.offset = offset
 
-    this.#data = Data.fromView(view)
-    this.#bytes = Bytes.fromView(view)
+    this.#data = Data.fromView(bytes)
+
+    this.#bytes = bytes
   }
 
   /**
    * get bytes
    */
-  get bytes(): Uint8Array<T> {
+  get bytes(): Uint8Array<T> & Lengthed<N> {
     return this.#bytes
   }
 
   /**
    * @returns total number of bytes
    */
-  get length(): number {
+  get length(): N {
     return this.#bytes.length
   }
 
