@@ -1,6 +1,6 @@
 {
   "name": "@hazae41/cursor",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "imports": {
     "@/": "./src/",
     "@hazae41/lengthed": "jsr:@hazae41/lengthed@^1.0.1",
