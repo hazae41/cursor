@@ -82,37 +82,22 @@ export class CursorWriteUnknownError extends Error {
 
 export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends number = number> {
 
-  readonly #data: DataView<T>
-
-  readonly #bytes: Uint8Array<T> & Lengthed<N>
-
-  offset: number
+  readonly data: DataView<T>
 
   /**
    * A cursor for bytes
    * @param inner 
    * @param offset 
    */
-  constructor(bytes: Uint8Array<T> & Lengthed<N>, offset = 0) {
-    this.offset = offset
-
-    this.#data = Data.fromView(bytes)
-
-    this.#bytes = bytes
-  }
-
-  /**
-   * get bytes
-   */
-  get bytes(): Uint8Array<T> & Lengthed<N> {
-    return this.#bytes
+  constructor(readonly bytes: Uint8Array<T> & Lengthed<N>, public offset = 0) {
+    this.data = Data.fromView(bytes)
   }
 
   /**
    * @returns total number of bytes
    */
   get length(): N {
-    return this.#bytes.length
+    return this.bytes.length
   }
 
   /**
@@ -127,7 +112,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
    * @returns subarray of the bytes before the current offset
    */
   get before(): Uint8Array<T> {
-    return this.#bytes.subarray(0, this.offset)
+    return this.bytes.subarray(0, this.offset)
   }
 
   /**
@@ -135,7 +120,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
    * @returns subarray of the bytes after the current offset
    */
   get after(): Uint8Array<T> {
-    return this.#bytes.subarray(this.offset)
+    return this.bytes.subarray(this.offset)
   }
 
   /**
@@ -147,7 +132,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
 
-    const subarray = this.#bytes.subarray(this.offset, this.offset + length)
+    const subarray = this.bytes.subarray(this.offset, this.offset + length)
 
     return subarray as Uint8Array<T> & Lengthed<N>
   }
@@ -171,7 +156,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
     if (this.remaining < array.length)
       throw CursorWriteLengthOverflowError.from(this, array.length)
 
-    this.#bytes.set(array, this.offset)
+    this.bytes.set(array, this.offset)
   }
 
   /**
@@ -184,7 +169,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   }
 
   getUint8OrThrow(): number {
-    return this.#bytes[this.offset]
+    return this.bytes[this.offset]
   }
 
   readUint8OrThrow(): number {
@@ -194,7 +179,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   }
 
   setUint8OrThrow(x: number): void {
-    this.#bytes[this.offset] = x
+    this.bytes[this.offset] = x
   }
 
   writeUint8OrThrow(x: number): void {
@@ -203,7 +188,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   }
 
   getUint16OrThrow(littleEndian?: boolean): number {
-    return this.#data.getUint16(this.offset, littleEndian)
+    return this.data.getUint16(this.offset, littleEndian)
   }
 
   readUint16OrThrow(littleEndian?: boolean): number {
@@ -213,7 +198,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   }
 
   setUint16OrThrow(x: number, littleEndian?: boolean): void {
-    this.#data.setUint16(this.offset, x, littleEndian)
+    this.data.setUint16(this.offset, x, littleEndian)
   }
 
   writeUint16OrThrow(x: number, littleEndian?: boolean): void {
@@ -223,9 +208,9 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
 
   getUint24OrThrow(littleEndian?: boolean): number {
     if (littleEndian) {
-      return (this.#bytes[this.offset]) | (this.#bytes[this.offset + 1] << 8) | (this.#bytes[this.offset + 2] << 16)
+      return (this.bytes[this.offset]) | (this.bytes[this.offset + 1] << 8) | (this.bytes[this.offset + 2] << 16)
     } else {
-      return (this.#bytes[this.offset] << 16) | (this.#bytes[this.offset + 1] << 8) | (this.#bytes[this.offset + 2])
+      return (this.bytes[this.offset] << 16) | (this.bytes[this.offset + 1] << 8) | (this.bytes[this.offset + 2])
     }
   }
 
@@ -237,13 +222,13 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
 
   setUint24OrThrow(x: number, littleEndian?: boolean): void {
     if (littleEndian) {
-      this.#bytes[this.offset] = x & 0xFF
-      this.#bytes[this.offset + 1] = (x >> 8) & 0xFF
-      this.#bytes[this.offset + 2] = (x >> 16) & 0xFF
+      this.bytes[this.offset] = x & 0xFF
+      this.bytes[this.offset + 1] = (x >> 8) & 0xFF
+      this.bytes[this.offset + 2] = (x >> 16) & 0xFF
     } else {
-      this.#bytes[this.offset] = (x >> 16) & 0xFF
-      this.#bytes[this.offset + 1] = (x >> 8) & 0xFF
-      this.#bytes[this.offset + 2] = x & 0xFF
+      this.bytes[this.offset] = (x >> 16) & 0xFF
+      this.bytes[this.offset + 1] = (x >> 8) & 0xFF
+      this.bytes[this.offset + 2] = x & 0xFF
     }
   }
 
@@ -253,7 +238,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   }
 
   getUint32OrThrow(littleEndian?: boolean): number {
-    return this.#data.getUint32(this.offset, littleEndian)
+    return this.data.getUint32(this.offset, littleEndian)
   }
 
   readUint32OrThrow(littleEndian?: boolean): number {
@@ -263,7 +248,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   }
 
   setUint32OrThrow(x: number, littleEndian?: boolean): void {
-    this.#data.setUint32(this.offset, x, littleEndian)
+    this.data.setUint32(this.offset, x, littleEndian)
   }
 
   writeUint32OrThrow(x: number, littleEndian?: boolean): void {
@@ -272,7 +257,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   }
 
   getUint64OrThrow(littleEndian?: boolean): bigint {
-    return this.#data.getBigUint64(this.offset, littleEndian)
+    return this.data.getBigUint64(this.offset, littleEndian)
   }
 
   readUint64OrThrow(littleEndian?: boolean): bigint {
@@ -282,7 +267,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   }
 
   setUint64OrThrow(x: bigint, littleEndian?: boolean): void {
-    this.#data.setBigUint64(this.offset, x, littleEndian)
+    this.data.setBigUint64(this.offset, x, littleEndian)
   }
 
   writeUint64OrThrow(x: bigint, littleEndian?: boolean): void {
@@ -318,10 +303,10 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   getNullOrThrow(): number {
     let i = this.offset
 
-    while (i < this.#bytes.length && this.#bytes[i] > 0)
+    while (i < this.bytes.length && this.bytes[i] > 0)
       i++
 
-    if (i === this.#bytes.length)
+    if (i === this.bytes.length)
       throw CursorReadNullOverflowError.from(this)
 
     return i
@@ -359,7 +344,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
     if (this.remaining < length)
       throw CursorWriteLengthOverflowError.from(this, length)
 
-    this.#bytes.fill(value, this.offset, this.offset + length)
+    this.bytes.fill(value, this.offset, this.offset + length)
     this.offset += length
   }
 
