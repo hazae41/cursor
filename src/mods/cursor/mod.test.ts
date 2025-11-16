@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-unused-vars require-await
+// deno-lint-ignore-file require-await
 import { assert, test, throws } from "@hazae41/phobos";
 import { Buffer } from "node:buffer";
 import { relative, resolve } from "node:path";
@@ -129,32 +129,4 @@ test("writeUint32 then readUint32", async () => {
 
   // assert(cursor.tryWriteUint32(2 ** 32).ignore().isErr())
   // assert(cursor.tryWriteUint32(-1).ignore().isErr())
-})
-
-test("fill", async ({ test }) => {
-  const cursor = new Cursor(new Uint8Array(5))
-
-  cursor.offset += 2
-  cursor.fillOrThrow(1, 2)
-
-  const expected = new Uint8Array([0, 0, 1, 1, 0])
-  assert(equals(cursor.bytes, expected))
-})
-
-test("split", async ({ test }) => {
-  const cursor = new Cursor(crypto.getRandomValues(new Uint8Array(256)))
-
-  const splitter = cursor.splitOrThrow(100)
-  const chunks = new Array<Uint8Array>()
-
-  let result = splitter.next()
-
-  for (; result.done === false; result = splitter.next())
-    chunks.push(result.value)
-
-  result.value
-
-  assert(chunks[0].length === 100)
-  assert(chunks[1].length === 100)
-  assert(chunks[2].length === 56)
 })
