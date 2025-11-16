@@ -1,5 +1,5 @@
-import { Data } from "@/libs/dataviews/mod.ts"
-import type { Lengthed } from "@/libs/lengthed/mod.ts"
+import { Data } from "../../libs/dataviews/mod.ts";
+import type { Lengthed } from "../../libs/lengthed/mod.ts";
 
 export type CursorError =
   | CursorReadError
@@ -272,6 +272,44 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
 
   writeUint64OrThrow(x: bigint, littleEndian?: boolean): void {
     this.setUint64OrThrow(x, littleEndian)
+    this.offset += 8
+  }
+
+  getFloat32OrThrow(littleEndian?: boolean): number {
+    return this.data.getFloat32(this.offset, littleEndian)
+  }
+
+  readFloat32OrThrow(littleEndian?: boolean): number {
+    const x = this.getFloat32OrThrow(littleEndian)
+    this.offset += 4
+    return x
+  }
+
+  setFloat32OrThrow(x: number, littleEndian?: boolean): void {
+    this.data.setFloat32(this.offset, x, littleEndian)
+  }
+
+  writeFloat32OrThrow(x: number, littleEndian?: boolean): void {
+    this.setFloat32OrThrow(x, littleEndian)
+    this.offset += 4
+  }
+
+  getFloat64OrThrow(littleEndian?: boolean): number {
+    return this.data.getFloat64(this.offset, littleEndian)
+  }
+
+  readFloat64OrThrow(littleEndian?: boolean): number {
+    const x = this.getFloat64OrThrow(littleEndian)
+    this.offset += 8
+    return x
+  }
+
+  setFloat64OrThrow(x: number, littleEndian?: boolean): void {
+    this.data.setFloat64(this.offset, x, littleEndian)
+  }
+
+  writeFloat64OrThrow(x: number, littleEndian?: boolean): void {
+    this.setFloat64OrThrow(x, littleEndian)
     this.offset += 8
   }
 
