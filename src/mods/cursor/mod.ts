@@ -1,21 +1,5 @@
 import { Data } from "@/libs/dataviews/mod.ts";
 
-export type CursorError =
-  | CursorReadError
-  | CursorWriteError
-
-export type CursorReadError =
-  | CursorReadOverflowError
-  | CursorReadUnknownError
-
-export type CursorReadOverflowError =
-  | CursorReadLengthOverflowError
-  | CursorReadNullOverflowError
-
-export type CursorWriteError =
-  | CursorWriteLengthOverflowError
-  | CursorWriteUnknownError
-
 export class CursorReadLengthOverflowError extends Error {
   readonly #class = CursorReadLengthOverflowError
   readonly name: string = this.#class.name
@@ -67,16 +51,6 @@ export class CursorReadNullOverflowError extends Error {
     return new CursorReadNullOverflowError(cursor.offset, cursor.length)
   }
 
-}
-
-export class CursorReadUnknownError extends Error {
-  readonly #class = CursorReadUnknownError
-  readonly name: string = this.#class.name
-}
-
-export class CursorWriteUnknownError extends Error {
-  readonly #class = CursorWriteUnknownError
-  readonly name: string = this.#class.name
 }
 
 export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
