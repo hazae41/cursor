@@ -26,8 +26,8 @@ npm install @hazae41/cursor
 ```typescript
 const cursor = new Cursor(new Uint8Array(1024))
 
-cursor.writeUint8OrThrow(123)
-cursor.writeUint16OrThrow(1234)
+cursor.writeUint8(123)
+cursor.writeUint16(1234)
 
 console.log(cursor.offset) // 3
 ```
@@ -37,8 +37,8 @@ console.log(cursor.offset) // 3
 ```typescript
 const cursor = new Cursor(new Uint8Array(/*...*/))
 
-const uint8 = cursor.readUint8OrThrow()
-const uint16 = cursor.readUint16OrThrow()
+const uint8 = cursor.readUint8()
+const uint16 = cursor.readUint16()
 
 console.log(cursor.offset) // 3
 ```

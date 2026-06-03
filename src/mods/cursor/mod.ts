@@ -1,5 +1,4 @@
-import { Data } from "../../libs/dataviews/mod.ts";
-import type { Uint8Array } from "../../libs/lengthed/mod.ts";
+import { Data } from "@/libs/dataviews/mod.ts";
 
 export type CursorError =
   | CursorReadError
@@ -80,7 +79,7 @@ export class CursorWriteUnknownError extends Error {
   readonly name: string = this.#class.name
 }
 
-export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends number = number> {
+export class Cursor<T extends ArrayBufferLike = ArrayBufferLike> {
 
   readonly data: DataView<T>
 
@@ -92,7 +91,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
    * @param offset 
    */
   constructor(
-    readonly bytes: Uint8Array<T, N>
+    readonly bytes: Uint8Array<T>
   ) {
     this.data = Data.fromView(bytes)
   }
@@ -100,7 +99,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
   /**
    * @returns total number of bytes
    */
-  get length(): N {
+  get length(): number {
     return this.bytes.length
   }
 
@@ -132,13 +131,11 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
    * @param length 
    * @returns subarray of the bytes
    */
-  getOrThrow<N extends number>(length: N): Uint8Array<T, N> {
+  get(length: number): Uint8Array<T> {
     if (this.remaining < length)
       throw CursorReadLengthOverflowError.from(this, length)
 
-    const subarray = this.bytes.subarray(this.offset, this.offset + length)
-
-    return subarray as Uint8Array<T, N>
+    return this.bytes.subarray(this.offset, this.offset + length)
   }
 
   /**
@@ -146,9 +143,11 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
    * @param length 
    * @returns subarray of the bytes
    */
-  readOrThrow<N extends number>(length: N): Uint8Array<T, N> {
-    const subarray = this.getOrThrow(length)
+  read(length: number): Uint8Array<T> {
+    const subarray = this.get(length)
+
     this.offset += length
+
     return subarray
   }
 
@@ -156,7 +155,7 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
    * Set an array to the bytes
    * @param array array
    */
-  setOrThrow(array: Uint8Array): void {
+  set(array: Uint8Array): void {
     if (this.remaining < array.length)
       throw CursorWriteLengthOverflowError.from(this, array.length)
 
@@ -167,88 +166,101 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
    * Write an array to the bytes
    * @param array array
    */
-  writeOrThrow(array: Uint8Array): void {
-    this.setOrThrow(array)
+  write(array: Uint8Array): void {
+    this.set(array)
+
     this.offset += array.length
   }
 
-  getUint8OrThrow(): number {
+  getUint8(): number {
     return this.data.getUint8(this.offset)
   }
 
-  readUint8OrThrow(): number {
-    const x = this.getUint8OrThrow()
+  readUint8(): number {
+    const x = this.getUint8()
+
     this.offset++
+
     return x
   }
 
-  setUint8OrThrow(x: number): void {
+  setUint8(x: number): void {
     this.data.setUint8(this.offset, x)
   }
 
-  writeUint8OrThrow(x: number): void {
-    this.setUint8OrThrow(x)
+  writeUint8(x: number): void {
+    this.setUint8(x)
+
     this.offset++
   }
 
-  getInt8OrThrow(): number {
+  getInt8(): number {
     return this.data.getInt8(this.offset)
   }
 
-  readInt8OrThrow(): number {
-    const x = this.getInt8OrThrow()
+  readInt8(): number {
+    const x = this.getInt8()
+
     this.offset++
+
     return x
   }
 
-  setInt8OrThrow(x: number): void {
+  setInt8(x: number): void {
     this.data.setInt8(this.offset, x)
   }
 
-  writeInt8OrThrow(x: number): void {
-    this.setInt8OrThrow(x)
+  writeInt8(x: number): void {
+    this.setInt8(x)
+
     this.offset++
   }
 
-  getUint16OrThrow(littleEndian?: boolean): number {
+  getUint16(littleEndian?: boolean): number {
     return this.data.getUint16(this.offset, littleEndian)
   }
 
-  readUint16OrThrow(littleEndian?: boolean): number {
-    const x = this.getUint16OrThrow(littleEndian)
+  readUint16(littleEndian?: boolean): number {
+    const x = this.getUint16(littleEndian)
+
     this.offset += 2
+
     return x
   }
 
-  setUint16OrThrow(x: number, littleEndian?: boolean): void {
+  setUint16(x: number, littleEndian?: boolean): void {
     this.data.setUint16(this.offset, x, littleEndian)
   }
 
-  writeUint16OrThrow(x: number, littleEndian?: boolean): void {
-    this.setUint16OrThrow(x, littleEndian)
+  writeUint16(x: number, littleEndian?: boolean): void {
+    this.setUint16(x, littleEndian)
+
     this.offset += 2
   }
 
-  getInt16OrThrow(littleEndian?: boolean): number {
+  getInt16(littleEndian?: boolean): number {
     return this.data.getInt16(this.offset, littleEndian)
   }
 
-  readInt16OrThrow(littleEndian?: boolean): number {
-    const x = this.getInt16OrThrow(littleEndian)
+  readInt16(littleEndian?: boolean): number {
+    const x = this.getInt16(littleEndian)
+
     this.offset += 2
+
     return x
   }
 
-  setInt16OrThrow(x: number, littleEndian?: boolean): void {
+  setInt16(x: number, littleEndian?: boolean): void {
     this.data.setInt16(this.offset, x, littleEndian)
   }
 
-  writeInt16OrThrow(x: number, littleEndian?: boolean): void {
-    this.setInt16OrThrow(x, littleEndian)
+  writeInt16(x: number, littleEndian?: boolean): void {
+    this.setInt16(x, littleEndian)
+
     this.offset += 2
   }
 
-  getUint24OrThrow(littleEndian?: boolean): number {
+  getUint24(littleEndian?: boolean): number {
     if (littleEndian) {
       return (this.bytes[this.offset]) | (this.bytes[this.offset + 1] << 8) | (this.bytes[this.offset + 2] << 16)
     } else {
@@ -256,13 +268,15 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
     }
   }
 
-  readUint24OrThrow(littleEndian?: boolean): number {
-    const x = this.getUint24OrThrow(littleEndian)
+  readUint24(littleEndian?: boolean): number {
+    const x = this.getUint24(littleEndian)
+
     this.offset += 3
+
     return x
   }
 
-  setUint24OrThrow(x: number, littleEndian?: boolean): void {
+  setUint24(x: number, littleEndian?: boolean): void {
     if (littleEndian) {
       this.bytes[this.offset] = x & 0xFF
       this.bytes[this.offset + 1] = (x >> 8) & 0xFF
@@ -274,141 +288,163 @@ export class Cursor<T extends ArrayBufferLike = ArrayBufferLike, N extends numbe
     }
   }
 
-  writeUint24OrThrow(x: number, littleEndian?: boolean): void {
-    this.setUint24OrThrow(x, littleEndian)
+  writeUint24(x: number, littleEndian?: boolean): void {
+    this.setUint24(x, littleEndian)
+
     this.offset += 3
   }
 
-  getUint32OrThrow(littleEndian?: boolean): number {
+  getUint32(littleEndian?: boolean): number {
     return this.data.getUint32(this.offset, littleEndian)
   }
 
-  readUint32OrThrow(littleEndian?: boolean): number {
-    const x = this.getUint32OrThrow(littleEndian)
+  readUint32(littleEndian?: boolean): number {
+    const x = this.getUint32(littleEndian)
+
     this.offset += 4
+
     return x
   }
 
-  setUint32OrThrow(x: number, littleEndian?: boolean): void {
+  setUint32(x: number, littleEndian?: boolean): void {
     this.data.setUint32(this.offset, x, littleEndian)
   }
 
-  writeUint32OrThrow(x: number, littleEndian?: boolean): void {
-    this.setUint32OrThrow(x, littleEndian)
+  writeUint32(x: number, littleEndian?: boolean): void {
+    this.setUint32(x, littleEndian)
+
     this.offset += 4
   }
 
-  getInt32OrThrow(littleEndian?: boolean): number {
+  getInt32(littleEndian?: boolean): number {
     return this.data.getInt32(this.offset, littleEndian)
   }
 
-  readInt32OrThrow(littleEndian?: boolean): number {
-    const x = this.getInt32OrThrow(littleEndian)
+  readInt32(littleEndian?: boolean): number {
+    const x = this.getInt32(littleEndian)
+
     this.offset += 4
+
     return x
   }
 
-  setInt32OrThrow(x: number, littleEndian?: boolean): void {
+  setInt32(x: number, littleEndian?: boolean): void {
     this.data.setInt32(this.offset, x, littleEndian)
   }
 
-  writeInt32OrThrow(x: number, littleEndian?: boolean): void {
-    this.setInt32OrThrow(x, littleEndian)
+  writeInt32(x: number, littleEndian?: boolean): void {
+    this.setInt32(x, littleEndian)
+
     this.offset += 4
   }
 
-  getBigUint64OrThrow(littleEndian?: boolean): bigint {
+  getBigUint64(littleEndian?: boolean): bigint {
     return this.data.getBigUint64(this.offset, littleEndian)
   }
 
-  readBigUint64OrThrow(littleEndian?: boolean): bigint {
-    const x = this.getBigUint64OrThrow(littleEndian)
+  readBigUint64(littleEndian?: boolean): bigint {
+    const x = this.getBigUint64(littleEndian)
+
     this.offset += 8
+
     return x
   }
 
-  setBigUint64OrThrow(x: bigint, littleEndian?: boolean): void {
+  setBigUint64(x: bigint, littleEndian?: boolean): void {
     this.data.setBigUint64(this.offset, x, littleEndian)
   }
 
-  writeBigUint64OrThrow(x: bigint, littleEndian?: boolean): void {
-    this.setBigUint64OrThrow(x, littleEndian)
+  writeBigUint64(x: bigint, littleEndian?: boolean): void {
+    this.setBigUint64(x, littleEndian)
+
     this.offset += 8
   }
 
-  getBigInt64OrThrow(littleEndian?: boolean): bigint {
+  getBigInt64(littleEndian?: boolean): bigint {
     return this.data.getBigInt64(this.offset, littleEndian)
   }
 
-  readBigInt64OrThrow(littleEndian?: boolean): bigint {
-    const x = this.getBigInt64OrThrow(littleEndian)
+  readBigInt64(littleEndian?: boolean): bigint {
+    const x = this.getBigInt64(littleEndian)
+
     this.offset += 8
+
     return x
   }
 
-  setBigInt64OrThrow(x: bigint, littleEndian?: boolean): void {
+  setBigInt64(x: bigint, littleEndian?: boolean): void {
     this.data.setBigInt64(this.offset, x, littleEndian)
   }
 
-  writeBigInt64OrThrow(x: bigint, littleEndian?: boolean): void {
-    this.setBigInt64OrThrow(x, littleEndian)
+  writeBigInt64(x: bigint, littleEndian?: boolean): void {
+    this.setBigInt64(x, littleEndian)
+
     this.offset += 8
   }
 
-  getFloat16OrThrow(littleEndian?: boolean): number {
+  getFloat16(littleEndian?: boolean): number {
     return this.data.getFloat16(this.offset, littleEndian)
   }
 
-  readFloat16OrThrow(littleEndian?: boolean): number {
-    const x = this.getFloat16OrThrow(littleEndian)
+  readFloat16(littleEndian?: boolean): number {
+    const x = this.getFloat16(littleEndian)
+
     this.offset += 2
+
     return x
   }
 
-  setFloat16OrThrow(x: number, littleEndian?: boolean): void {
+  setFloat16(x: number, littleEndian?: boolean): void {
     this.data.setFloat16(this.offset, x, littleEndian)
   }
 
-  writeFloat16OrThrow(x: number, littleEndian?: boolean): void {
-    this.setFloat16OrThrow(x, littleEndian)
+  writeFloat16(x: number, littleEndian?: boolean): void {
+    this.setFloat16(x, littleEndian)
+
     this.offset += 2
   }
 
-  getFloat32OrThrow(littleEndian?: boolean): number {
+  getFloat32(littleEndian?: boolean): number {
     return this.data.getFloat32(this.offset, littleEndian)
   }
 
-  readFloat32OrThrow(littleEndian?: boolean): number {
-    const x = this.getFloat32OrThrow(littleEndian)
+  readFloat32(littleEndian?: boolean): number {
+    const x = this.getFloat32(littleEndian)
+
     this.offset += 4
+
     return x
   }
 
-  setFloat32OrThrow(x: number, littleEndian?: boolean): void {
+  setFloat32(x: number, littleEndian?: boolean): void {
     this.data.setFloat32(this.offset, x, littleEndian)
   }
 
-  writeFloat32OrThrow(x: number, littleEndian?: boolean): void {
-    this.setFloat32OrThrow(x, littleEndian)
+  writeFloat32(x: number, littleEndian?: boolean): void {
+    this.setFloat32(x, littleEndian)
+
     this.offset += 4
   }
 
-  getFloat64OrThrow(littleEndian?: boolean): number {
+  getFloat64(littleEndian?: boolean): number {
     return this.data.getFloat64(this.offset, littleEndian)
   }
 
-  readFloat64OrThrow(littleEndian?: boolean): number {
-    const x = this.getFloat64OrThrow(littleEndian)
+  readFloat64(littleEndian?: boolean): number {
+    const x = this.getFloat64(littleEndian)
+
     this.offset += 8
+
     return x
   }
 
-  setFloat64OrThrow(x: number, littleEndian?: boolean): void {
+  setFloat64(x: number, littleEndian?: boolean): void {
     this.data.setFloat64(this.offset, x, littleEndian)
   }
 
-  writeFloat64OrThrow(x: number, littleEndian?: boolean): void {
-    this.setFloat64OrThrow(x, littleEndian)
+  writeFloat64(x: number, littleEndian?: boolean): void {
+    this.setFloat64(x, littleEndian)
+
     this.offset += 8
   }
 

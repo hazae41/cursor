@@ -16,13 +16,13 @@ test("write then read", async () => {
   const bytes = new Uint8Array([1, 2, 3, 4])
   const cursor = new Cursor(new Uint8Array(bytes.length))
 
-  cursor.writeOrThrow(bytes)
+  cursor.write(bytes)
   assert(cursor.offset === bytes.length)
   assert(equals(cursor.bytes, bytes))
 
   cursor.offset = 0
 
-  const bytes2 = cursor.readOrThrow(bytes.length)
+  const bytes2 = cursor.read(bytes.length)
   assert(cursor.offset === bytes.length)
   assert(equals(cursor.bytes, bytes2))
 
@@ -31,8 +31,8 @@ test("write then read", async () => {
 
   const overflowing = Buffer.from([1, 2, 3, 4, 5])
 
-  assert(throws(() => cursor.writeOrThrow(overflowing)))
-  assert(throws(() => cursor.readOrThrow(overflowing.length)))
+  assert(throws(() => cursor.write(overflowing)))
+  assert(throws(() => cursor.read(overflowing.length)))
 })
 
 test("writeUint8 then readUint8", async () => {
@@ -40,14 +40,14 @@ test("writeUint8 then readUint8", async () => {
 
   const n = 42
 
-  cursor.writeUint8OrThrow(n)
+  cursor.writeUint8(n)
   assert(cursor.offset === 1)
   assert(cursor.length === 1)
   assert(equals(cursor.bytes, new Uint8Array([n])))
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint8OrThrow()
+  const n2 = cursor.readUint8()
   assert(cursor.offset === 1)
   assert(cursor.length === 1)
   assert(equals(cursor.bytes, new Uint8Array([n])))
@@ -65,13 +65,13 @@ test("writeUint16 then readUint16", async () => {
 
   const n = 42
 
-  cursor.writeUint16OrThrow(n)
+  cursor.writeUint16(n)
   assert(cursor.offset === 2)
   assert(cursor.length === 2)
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint16OrThrow()
+  const n2 = cursor.readUint16()
   assert(cursor.offset === 2)
   assert(cursor.length === 2)
 
@@ -88,13 +88,13 @@ test("writeUint24 then readUint24", async () => {
 
   const n = 42
 
-  cursor.writeUint24OrThrow(n)
+  cursor.writeUint24(n)
   assert(cursor.offset === 3)
   assert(cursor.length === 3)
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint24OrThrow()
+  const n2 = cursor.readUint24()
   assert(cursor.offset === 3)
   assert(cursor.length === 3)
 
@@ -102,8 +102,8 @@ test("writeUint24 then readUint24", async () => {
 
   cursor.offset = 0
 
-  // assert(throws(() => cursor.writeUint24OrThrow(2 ** 24)))
-  // assert(throws(() => cursor.writeUint24OrThrow(-1)))
+  // assert(throws(() => cursor.writeUint24(2 ** 24)))
+  // assert(throws(() => cursor.writeUint24(-1)))
 
   assert(Buffer.from(cursor.bytes).readUintBE(0, 3) === 42)
 })
@@ -113,13 +113,13 @@ test("writeUint32 then readUint32", async () => {
 
   const n = 42
 
-  cursor.writeUint32OrThrow(n)
+  cursor.writeUint32(n)
   assert(cursor.offset === 4)
   assert(cursor.length === 4)
 
   cursor.offset = 0
 
-  const n2 = cursor.readUint32OrThrow()
+  const n2 = cursor.readUint32()
   assert(cursor.offset === 4)
   assert(cursor.length === 4)
 
